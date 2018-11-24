@@ -37,8 +37,10 @@ class Game : public SimpleScene {
   void TopDownView();
   void ThirdPersonView();
 
-  static const float kTableWidth, kTableHeight, kTableLength, kTableThickness, kBallRadius;
-  static const glm::vec3 kTableSlateColor, kTableRailColor, kPlayerOneColor, kPlayerTwoColor;
+  static const float kTableWidth, kTableHeight, kTableLength, kTableThickness,
+      kBallRadius, kPocketRadius;
+  static const glm::vec3 kTableSlateColor, kTableRailColor, kPlayerOneColor,
+      kPlayerTwoColor;
 
   glm::vec3 lightPosition;
   unsigned int materialShininess;
@@ -46,6 +48,7 @@ class Game : public SimpleScene {
   float materialKs;
 
   Table *table;
+  std::vector<Ball *> pockets;
   std::vector<Ball *> balls;
 };
 }  // namespace pool

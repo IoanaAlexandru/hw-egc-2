@@ -12,7 +12,7 @@ namespace pool {
 
 const float Game::kTableWidth = 2.4f, Game::kTableHeight = 0.2f,
             Game::kTableLength = 4.4f, Game::kTableThickness = 0.2f,
-            Game::kBallRadius = 0.07f;
+            Game::kBallRadius = 0.07f, Game::kPocketRadius = 0.15f;
 const glm::vec3 Game::kTableSlateColor = glm::vec3(0, 0.5, 0.1),
                 Game::kTableRailColor = glm::vec3(0.4, 0.05, 0.05),
                 Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
@@ -28,6 +28,29 @@ void Game::Init() {
     table = new Table("PoolTable", glm::vec3(0, 0, 0), kTableWidth,
                       kTableLength, kTableHeight, kTableThickness,
                       kTableSlateColor, kTableRailColor);
+
+    glm::vec3 pure_black = glm::vec3(0, 0, 0);
+    glm::vec3 corner = glm::vec3(-kTableWidth / 2 + kTableThickness, 0, 0);
+    pockets.push_back(new Ball("pocket1", corner, kPocketRadius, pure_black));
+    pockets.push_back(new Ball(
+        "pocket2",
+        corner + glm::vec3(0, 0, kTableLength / 2 - kTableThickness),
+        kPocketRadius, pure_black));
+    pockets.push_back(new Ball(
+        "pocket3",
+        corner + glm::vec3(0, 0, -kTableLength / 2 + kTableThickness),
+        kPocketRadius, pure_black));
+    corner = glm::vec3(kTableWidth / 2 - kTableThickness, 0, 0);
+    pockets.push_back(new Ball("pocket4", corner, kPocketRadius, pure_black));
+    pockets.push_back(new Ball(
+        "pocket5",
+        corner + glm::vec3(0, 0, kTableLength / 2 - kTableThickness),
+        kPocketRadius, pure_black));
+    pockets.push_back(new Ball(
+        "pocket6",
+        corner + glm::vec3(0, 0, -kTableLength / 2 + kTableThickness),
+        kPocketRadius, pure_black));
+
   }
 
   {
@@ -56,7 +79,8 @@ void Game::Init() {
       ball_center.z -= row_offset;
     }
 
-    ball_center = glm::vec3(0, kBallRadius, (kTableLength - 2 * kTableThickness) / 4);
+    ball_center =
+        glm::vec3(0, kBallRadius, (kTableLength - 2 * kTableThickness) / 4);
     ball_color = glm::vec3(0.9, 0.9, 0.9);
     ball_name = "cue_ball";
     balls.push_back(new Ball(ball_name, ball_center, kBallRadius, ball_color));
@@ -111,6 +135,10 @@ void Game::Update(float deltaTimeSeconds) {
     for (auto ball : balls) {
       RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"], ball->model_matrix_,
                        ball->color_);
+    }
+    for (auto pocket : pockets) {
+      RenderSimpleMesh((Mesh *)pocket, shaders["PoolShader"],
+                       pocket->model_matrix_, pocket->color_);
     }
   }
 

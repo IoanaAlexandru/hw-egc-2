@@ -60,7 +60,6 @@
     <ClInclude Include="..\Source\pool\game.h" />
     <ClInclude Include="..\Source\pool\objects\ball.h" />
     <ClInclude Include="..\Source\pool\objects\table.h" />
-    <ClInclude Include="D:\Downloads\egc-lab4-7\EGC-lab4-7\Laborator5\camera.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Source\pool\shaders\FragmentShader.glsl" />
