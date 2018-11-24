@@ -1,12 +1,13 @@
 #version 330
 
-// TODO: get values from fragment shader
-in vec3 frag_normal;
+// TODO: get color value from vertex shader
 
 layout(location = 0) out vec4 out_color;
+
+in vec3 color;
 
 void main()
 {
 	// TODO: write pixel out color
-	out_color = vec4(1);
+	out_color = vec4(color, 1);
 }
