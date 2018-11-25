@@ -6,6 +6,7 @@
 #include <Component/Transform/Transform.h>
 #include <Core/GPU/Mesh.h>
 #include "pool/objects/ball.h"
+#include "pool/objects/cue.h"
 #include "pool/objects/table.h"
 
 namespace pool {
@@ -30,8 +31,10 @@ class Game : public SimpleScene {
   void OnKeyRelease(int key, int mods) override;
   void OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) override;
   void OnMouseBtnPress(int mouse_x, int mouse_y, int button, int mods) override;
-  void OnMouseBtnRelease(int mouse_x, int mouse_y, int button, int mods) override;
-  void OnMouseScroll(int mouse_x, int mouse_y, int offset_x, int offset_y) override;
+  void OnMouseBtnRelease(int mouse_x, int mouse_y, int button,
+                         int mods) override;
+  void OnMouseScroll(int mouse_x, int mouse_y, int offset_x,
+                     int offset_y) override;
   void OnWindowResize(int width, int height) override;
 
   glm::vec2 GetViewPoint(glm::vec2 target_pos, glm::vec2 ball_pos);
@@ -39,9 +42,9 @@ class Game : public SimpleScene {
   void ThirdPersonView();
 
   static const float kTableWidth, kTableHeight, kTableLength, kTableThickness,
-      kBallRadius, kPocketRadius;
-  static const glm::vec3 kTableSlateColor, kTableRailColor, kPlayerOneColor,
-      kPlayerTwoColor;
+      kBallRadius, kPocketRadius, kCueLength;
+  static const glm::vec3 kTableSlateColor, kTableRailColor, kCueColor,
+      kPlayerOneColor, kPlayerTwoColor;
   static const float kMovementSpeed, kCueBallViewDistance, kCueBallViewHeight;
   static const int kBlackBallIndex = 5, kCueBallIndex = 0;
 
@@ -51,6 +54,7 @@ class Game : public SimpleScene {
   float ball_ks_;
 
   Table *table_;
+  Cue *cue_;
   std::vector<Ball *> pockets_;
   std::vector<Ball *> balls_;
 };

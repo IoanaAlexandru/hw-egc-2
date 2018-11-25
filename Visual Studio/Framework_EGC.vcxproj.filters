@@ -82,6 +82,9 @@
     <ClCompile Include="..\Source\pool\game.cc">
       <Filter>pool</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\pool\objects\cue.cc">
+      <Filter>pool\objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\Core\World.h">
@@ -145,6 +148,9 @@
       <Filter>pool\objects</Filter>
     </ClInclude>
     <ClInclude Include="..\Source\pool\objects\table.h">
+      <Filter>pool\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\pool\objects\cue.h">
       <Filter>pool\objects</Filter>
     </ClInclude>
   </ItemGroup>

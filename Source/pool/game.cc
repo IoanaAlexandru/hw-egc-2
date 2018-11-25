@@ -13,9 +13,11 @@ namespace pool {
 
 const float Game::kTableWidth = 2.4f, Game::kTableHeight = 0.2f,
             Game::kTableLength = 4.4f, Game::kTableThickness = 0.2f,
-            Game::kBallRadius = 0.07f, Game::kPocketRadius = 0.15f;
+            Game::kBallRadius = 0.07f, Game::kPocketRadius = 0.15f,
+            Game::kCueLength = 2.5f;
 const glm::vec3 Game::kTableSlateColor = glm::vec3(0, 0.5, 0.1),
                 Game::kTableRailColor = glm::vec3(0.4, 0.05, 0.05),
+                Game::kCueColor = glm::vec3(0.5, 0.15, 0.15),
                 Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
                 Game::kPlayerTwoColor = glm::vec3(0.96, 0.76, 0.05);
 const float Game::kMovementSpeed = 2.0f, Game::kCueBallViewDistance = 0.8f,
@@ -29,6 +31,9 @@ void Game::Init() {
   {
     GetSceneCamera()->type = EngineComponents::CameraType::ThirdPerson;
     TopDownView();
+  }
+
+  {
     table_ = new Table("PoolTable", glm::vec3(0, 0, 0), kTableWidth,
                        kTableLength, kTableHeight, kTableThickness,
                        kTableSlateColor, kTableRailColor);
@@ -87,6 +92,13 @@ void Game::Init() {
   }
 
   {
+    cue_ = new Cue(
+        "cue",
+        balls_[kCueBallIndex]->GetCenter() + glm::vec3(0, 0, kBallRadius),
+        kCueLength, kCueColor);
+  }
+
+  {
     Mesh *mesh = new Mesh("box");
     mesh->LoadMesh(RESOURCE_PATH::MODELS + "Primitives", "box.obj");
     meshes[mesh->GetMeshID()] = mesh;
@@ -140,6 +152,8 @@ void Game::Update(float delta_time_seconds) {
       RenderSimpleMesh((Mesh *)pocket, shaders["PoolShader"],
                        pocket->GetModelMatrix(), pocket->GetColor());
     }
+    RenderSimpleMesh((Mesh *)cue_, shaders["PoolShader"],
+                     cue_->GetModelMatrix(), cue_->GetColor());
   }
 
   // Render the point light in the scene

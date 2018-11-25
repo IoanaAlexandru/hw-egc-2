@@ -36,6 +36,7 @@
     <ClCompile Include="..\Source\Main.cpp" />
     <ClCompile Include="..\Source\pool\game.cc" />
     <ClCompile Include="..\Source\pool\objects\ball.cc" />
+    <ClCompile Include="..\Source\pool\objects\cue.cc" />
     <ClCompile Include="..\Source\pool\objects\table.cc" />
   </ItemGroup>
   <ItemGroup>
@@ -59,6 +60,7 @@
     <ClInclude Include="..\Source\include\utils.h" />
     <ClInclude Include="..\Source\pool\game.h" />
     <ClInclude Include="..\Source\pool\objects\ball.h" />
+    <ClInclude Include="..\Source\pool\objects\cue.h" />
     <ClInclude Include="..\Source\pool\objects\table.h" />
   </ItemGroup>
   <ItemGroup>
