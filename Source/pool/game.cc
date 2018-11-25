@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <Core/Engine.h>
+#include <Engine/Component/Camera/Camera.h>
 
 using namespace std;
 
@@ -17,7 +18,8 @@ const glm::vec3 Game::kTableSlateColor = glm::vec3(0, 0.5, 0.1),
                 Game::kTableRailColor = glm::vec3(0.4, 0.05, 0.05),
                 Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
                 Game::kPlayerTwoColor = glm::vec3(0.96, 0.76, 0.05);
-const float Game::kMovementSpeed = 2.0f;
+const float Game::kMovementSpeed = 2.0f, Game::kCueBallViewDistance = 0.8f,
+            Game::kCueBallViewHeight = 0.3f;
 
 Game::Game() {}
 
@@ -25,10 +27,11 @@ Game::~Game() {}
 
 void Game::Init() {
   {
+    GetSceneCamera()->type = EngineComponents::CameraType::ThirdPerson;
     TopDownView();
     table_ = new Table("PoolTable", glm::vec3(0, 0, 0), kTableWidth,
-                      kTableLength, kTableHeight, kTableThickness,
-                      kTableSlateColor, kTableRailColor);
+                       kTableLength, kTableHeight, kTableThickness,
+                       kTableSlateColor, kTableRailColor);
 
     glm::vec3 pure_black = glm::vec3(0, 0, 0);
     glm::vec3 corner = glm::vec3(-kTableWidth / 2 + kTableThickness, 0, 0);
@@ -244,7 +247,7 @@ void Game::OnInputUpdate(float delta_time, int mods) {
 }
 
 void Game::OnKeyPress(int key, int mods) {
-  // add key press event
+  if (key == GLFW_KEY_SPACE) ThirdPersonView();
 }
 
 void Game::OnKeyRelease(int key, int mods) {
@@ -252,7 +255,14 @@ void Game::OnKeyRelease(int key, int mods) {
 }
 
 void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
-  // add mouse move event
+  if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT) &&
+      GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson) {
+    GetSceneCamera()->MoveForward(kCueBallViewDistance);
+    GetSceneCamera()->RotateOY((float)-delta_x);
+    GetSceneCamera()->RotateOX((float)-delta_y);
+    GetSceneCamera()->MoveForward(-kCueBallViewDistance);
+    GetSceneCamera()->Update();
+  }
 }
 
 void Game::OnMouseBtnPress(int mouse_x, int mouse_y, int button, int mods) {
@@ -263,13 +273,37 @@ void Game::OnMouseBtnRelease(int mouse_x, int mouse_y, int button, int mods) {
   // add mouse button release event
 }
 
-void Game::OnMouseScroll(int mouse_x, int mouse_y, int offset_x, int offset_y) {}
+void Game::OnMouseScroll(int mouse_x, int mouse_y, int offset_x, int offset_y) {
+}
 
 void Game::OnWindowResize(int width, int height) {}
 
 void Game::TopDownView() {
-  GetSceneCamera()->SetPosition(glm::vec3(0, 4, 0));
-  GetSceneCamera()->RotateOX(-750);
-  GetSceneCamera()->Update();
+  if (GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson) {
+    GetSceneCamera()->type = EngineComponents::CameraType::FirstPerson;
+    GetSceneCamera()->SetPosition(glm::vec3(0, 4, 0));
+    GetSceneCamera()->RotateOX(-750);
+    GetSceneCamera()->Update();
+  }
+}
+
+glm::vec2 Game::GetViewPoint(glm::vec2 target_pos, glm::vec2 ball_pos) {
+  glm::vec2 v = glm::normalize(target_pos - ball_pos);
+  return ball_pos - kCueBallViewDistance * v;
+}
+
+void Game::ThirdPersonView() {
+  if (GetSceneCamera()->type == EngineComponents::CameraType::FirstPerson) {
+    glm::vec2 default_target = glm::vec2(0, 0);  // look at center of table
+    glm::vec3 ball_center = balls_[kCueBallIndex]->GetCenter();
+    glm::vec2 view_point =
+        GetViewPoint(default_target, glm::vec2(ball_center.x, ball_center.z));
+
+    GetSceneCamera()->type = EngineComponents::CameraType::ThirdPerson;
+    GetSceneCamera()->SetPosition(
+        glm::vec3(view_point.x, kCueBallViewHeight, view_point.y));
+    GetSceneCamera()->RotateOX(750);
+    GetSceneCamera()->Update();
+  }
 }
 }  // namespace pool

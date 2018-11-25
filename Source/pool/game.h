@@ -34,6 +34,7 @@ class Game : public SimpleScene {
   void OnMouseScroll(int mouse_x, int mouse_y, int offset_x, int offset_y) override;
   void OnWindowResize(int width, int height) override;
 
+  glm::vec2 GetViewPoint(glm::vec2 target_pos, glm::vec2 ball_pos);
   void TopDownView();
   void ThirdPersonView();
 
@@ -41,7 +42,7 @@ class Game : public SimpleScene {
       kBallRadius, kPocketRadius;
   static const glm::vec3 kTableSlateColor, kTableRailColor, kPlayerOneColor,
       kPlayerTwoColor;
-  static const float kMovementSpeed;
+  static const float kMovementSpeed, kCueBallViewDistance, kCueBallViewHeight;
   static const int kBlackBallIndex = 5, kCueBallIndex = 0;
 
   glm::vec3 light_position_;
