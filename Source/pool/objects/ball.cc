@@ -20,27 +20,27 @@ Ball::Ball(std::string name, glm::vec3 center, float radius, glm::vec3 color)
 
 Ball::~Ball(){};
 
-void Ball::moveUp(float delta_time) {
+void Ball::MoveUp(float delta_time) {
   center_.z -= delta_time * kDefaultSpeed;
-  updateModelMatrix();
+  UpdateModelMatrix();
 }
 
-void Ball::moveDown(float delta_time) {
+void Ball::MoveDown(float delta_time) {
   center_.z += delta_time * kDefaultSpeed;
-  updateModelMatrix();
+  UpdateModelMatrix();
 }
 
-void Ball::moveRight(float delta_time) {
+void Ball::MoveRight(float delta_time) {
   center_.x += delta_time * kDefaultSpeed;
-  updateModelMatrix();
+  UpdateModelMatrix();
 }
 
-void Ball::moveLeft(float delta_time) {
+void Ball::MoveLeft(float delta_time) {
   center_.x -= delta_time * kDefaultSpeed;
-  updateModelMatrix();
+  UpdateModelMatrix();
 }
 
-void Ball::updateModelMatrix() {
+void Ball::UpdateModelMatrix() {
   model_matrix_ = glm::translate(glm::mat4(1), center_);
   model_matrix_ = glm::scale(model_matrix_, scale_);
 }

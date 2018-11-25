@@ -26,26 +26,26 @@ Game::~Game() {}
 void Game::Init() {
   {
     TopDownView();
-    table = new Table("PoolTable", glm::vec3(0, 0, 0), kTableWidth,
+    table_ = new Table("PoolTable", glm::vec3(0, 0, 0), kTableWidth,
                       kTableLength, kTableHeight, kTableThickness,
                       kTableSlateColor, kTableRailColor);
 
     glm::vec3 pure_black = glm::vec3(0, 0, 0);
     glm::vec3 corner = glm::vec3(-kTableWidth / 2 + kTableThickness, 0, 0);
-    pockets.push_back(new Ball("pocket1", corner, kPocketRadius, pure_black));
-    pockets.push_back(new Ball(
+    pockets_.push_back(new Ball("pocket1", corner, kPocketRadius, pure_black));
+    pockets_.push_back(new Ball(
         "pocket2", corner + glm::vec3(0, 0, kTableLength / 2 - kTableThickness),
         kPocketRadius, pure_black));
-    pockets.push_back(
+    pockets_.push_back(
         new Ball("pocket3",
                  corner + glm::vec3(0, 0, -kTableLength / 2 + kTableThickness),
                  kPocketRadius, pure_black));
     corner = glm::vec3(kTableWidth / 2 - kTableThickness, 0, 0);
-    pockets.push_back(new Ball("pocket4", corner, kPocketRadius, pure_black));
-    pockets.push_back(new Ball(
+    pockets_.push_back(new Ball("pocket4", corner, kPocketRadius, pure_black));
+    pockets_.push_back(new Ball(
         "pocket5", corner + glm::vec3(0, 0, kTableLength / 2 - kTableThickness),
         kPocketRadius, pure_black));
-    pockets.push_back(
+    pockets_.push_back(
         new Ball("pocket6",
                  corner + glm::vec3(0, 0, -kTableLength / 2 + kTableThickness),
                  kPocketRadius, pure_black));
@@ -56,7 +56,7 @@ void Game::Init() {
         glm::vec3(0, kBallRadius, (kTableLength - 2 * kTableThickness) / 4);
     glm::vec3 ball_color = glm::vec3(0.9, 0.9, 0.9);
     std::string ball_name = "cue_ball";
-    balls.push_back(new Ball(ball_name, ball_center, kBallRadius, ball_color));
+    balls_.push_back(new Ball(ball_name, ball_center, kBallRadius, ball_color));
 
     ball_center = glm::vec3(0, kBallRadius, -kTableLength / 5);
     ball_color = kPlayerOneColor;
@@ -73,7 +73,7 @@ void Game::Init() {
           ball_name = "ball" + std::to_string(ball_count++);
         }
 
-        balls.push_back(new Ball(
+        balls_.push_back(new Ball(
             ball_name, ball_center + glm::vec3(2 * kBallRadius * j, 0, 0),
             kBallRadius, ball_color));
       }
@@ -109,10 +109,10 @@ void Game::Init() {
 
   // Light & material properties
   {
-    lightPosition = glm::vec3(0, 1.2, 0);
-    materialShininess = 80;
-    materialKd = 0.9f;
-    materialKs = 1.5f;
+    light_position_ = glm::vec3(0, 1.2, 0);
+    ball_shininess_ = 80;
+    ball_kd_ = 0.9f;
+    ball_ks_ = 1.5f;
   }
 }  // namespace pool
 
@@ -126,23 +126,23 @@ void Game::FrameStart() {
   glViewport(0, 0, resolution.x, resolution.y);
 }
 
-void Game::Update(float deltaTimeSeconds) {
+void Game::Update(float delta_time_seconds) {
   {
-    RenderMesh(table, shaders["VertexColor"], glm::mat4(1));
-    for (auto ball : balls) {
+    RenderMesh(table_, shaders["VertexColor"], glm::mat4(1));
+    for (auto ball : balls_) {
       RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"],
-                       ball->getModelMatrix(), ball->getColor());
+                       ball->GetModelMatrix(), ball->GetColor());
     }
-    for (auto pocket : pockets) {
+    for (auto pocket : pockets_) {
       RenderSimpleMesh((Mesh *)pocket, shaders["PoolShader"],
-                       pocket->getModelMatrix(), pocket->getColor());
+                       pocket->GetModelMatrix(), pocket->GetColor());
     }
   }
 
   // Render the point light in the scene
   {
     glm::mat4 modelMatrix = glm::mat4(1);
-    modelMatrix = glm::translate(modelMatrix, lightPosition);
+    modelMatrix = glm::translate(modelMatrix, light_position_);
     modelMatrix = glm::scale(modelMatrix, glm::vec3(0.001f));
     RenderMesh(meshes["sphere"], shaders["Simple"], modelMatrix);
   }
@@ -151,7 +151,7 @@ void Game::Update(float deltaTimeSeconds) {
 void Game::FrameEnd() { DrawCoordinatSystem(); }
 
 void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
-                            const glm::mat4 &modelMatrix,
+                            const glm::mat4 &model_matrix,
                             const glm::vec3 &color) {
   if (!mesh || !shader || !shader->GetProgramID()) return;
 
@@ -159,25 +159,22 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
   glUseProgram(shader->program);
 
   // Set shader uniforms for light & material properties
-  // TODO: Set light position uniform
   GLint light = glGetUniformLocation(shader->program, "light_position");
-  glUniform3fv(light, 1, glm::value_ptr(lightPosition));
+  glUniform3fv(light, 1, glm::value_ptr(light_position_));
 
   GLint shininess = glGetUniformLocation(shader->program, "material_shininess");
 
-  // TODO: Set eye position (camera position) uniform
   GLint eye = glGetUniformLocation(shader->program, "eye_position");
   glm::vec3 eyePosition = GetSceneCamera()->transform->GetWorldPosition();
   glUniform3fv(eye, 1, glm::value_ptr(eyePosition));
 
-  // TODO: Set material property uniforms (shininess, kd, ks, object color)
-  glUniform1ui(shininess, materialShininess);
+  glUniform1ui(shininess, ball_shininess_);
 
   GLint kd = glGetUniformLocation(shader->program, "material_kd");
-  glUniform1f(kd, materialKd);
+  glUniform1f(kd, ball_kd_);
 
   GLint ks = glGetUniformLocation(shader->program, "material_ks");
-  glUniform1f(ks, materialKs);
+  glUniform1f(ks, ball_ks_);
 
   GLint colorP = glGetUniformLocation(shader->program, "object_color");
   glUniform3fv(colorP, 1, glm::value_ptr(color));
@@ -185,7 +182,7 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
   // Bind model matrix
   GLint loc_model_matrix = glGetUniformLocation(shader->program, "Model");
   glUniformMatrix4fv(loc_model_matrix, 1, GL_FALSE,
-                     glm::value_ptr(modelMatrix));
+                     glm::value_ptr(model_matrix));
 
   // Bind view matrix
   glm::mat4 viewMatrix = GetSceneCamera()->GetViewMatrix();
@@ -205,11 +202,7 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
                  GL_UNSIGNED_SHORT, 0);
 }
 
-// Documentation for the input functions can be found in:
-// "/Source/Core/Window/InputController.h" or
-// https://github.com/UPB-Graphics/Framework-EGC/blob/master/Source/Core/Window/InputController.h
-
-void Game::OnInputUpdate(float deltaTime, int mods) {
+void Game::OnInputUpdate(float delta_time, int mods) {
   if (!window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
     if (mods == GLFW_MOD_CONTROL) {
       glm::vec3 up = glm::vec3(0, 1, 0);
@@ -219,33 +212,33 @@ void Game::OnInputUpdate(float deltaTime, int mods) {
 
       // Control light position using on W, A, S, D, E, Q
       if (window->KeyHold(GLFW_KEY_W))
-        lightPosition -= forward * deltaTime * kMovementSpeed;
+        light_position_ -= forward * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_A))
-        lightPosition -= right * deltaTime * kMovementSpeed;
+        light_position_ -= right * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_S))
-        lightPosition += forward * deltaTime * kMovementSpeed;
+        light_position_ += forward * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_D))
-        lightPosition += right * deltaTime * kMovementSpeed;
+        light_position_ += right * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_E))
-        lightPosition += up * deltaTime * kMovementSpeed;
+        light_position_ += up * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_Q))
-        lightPosition -= up * deltaTime * kMovementSpeed;
+        light_position_ -= up * delta_time * kMovementSpeed;
     } else {
-      Ball *cue_ball = balls[kCueBallIndex];
-      glm::vec3 pos = cue_ball->getCenter();
+      Ball *cue_ball = balls_[kCueBallIndex];
+      glm::vec3 pos = cue_ball->GetCenter();
 
       if (window->KeyHold(GLFW_KEY_W) &&
           pos.z > kTableLength / 6 + kTableThickness + kBallRadius)
-        cue_ball->moveUp(deltaTime);
+        cue_ball->MoveUp(delta_time);
       if (window->KeyHold(GLFW_KEY_A) &&
           pos.x > -kTableWidth / 2 + kTableThickness + kBallRadius)
-        cue_ball->moveLeft(deltaTime);
+        cue_ball->MoveLeft(delta_time);
       if (window->KeyHold(GLFW_KEY_S) &&
           pos.z < kTableLength / 2 - kTableThickness - kBallRadius)
-        cue_ball->moveDown(deltaTime);
+        cue_ball->MoveDown(delta_time);
       if (window->KeyHold(GLFW_KEY_D) &&
           pos.x < kTableWidth / 2 - kTableThickness - kBallRadius)
-        cue_ball->moveRight(deltaTime);
+        cue_ball->MoveRight(delta_time);
     }
   }
 }
@@ -258,19 +251,19 @@ void Game::OnKeyRelease(int key, int mods) {
   // add key release event
 }
 
-void Game::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY) {
+void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
   // add mouse move event
 }
 
-void Game::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods) {
+void Game::OnMouseBtnPress(int mouse_x, int mouse_y, int button, int mods) {
   // add mouse button press event
 }
 
-void Game::OnMouseBtnRelease(int mouseX, int mouseY, int button, int mods) {
+void Game::OnMouseBtnRelease(int mouse_x, int mouse_y, int button, int mods) {
   // add mouse button release event
 }
 
-void Game::OnMouseScroll(int mouseX, int mouseY, int offsetX, int offsetY) {}
+void Game::OnMouseScroll(int mouse_x, int mouse_y, int offset_x, int offset_y) {}
 
 void Game::OnWindowResize(int width, int height) {}
 

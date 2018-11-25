@@ -11,18 +11,18 @@ class Ball : Mesh {
   Ball(std::string name, glm::vec3 center, float radius, glm::vec3 color);
   ~Ball();
 
-  inline glm::mat4 getModelMatrix() { return model_matrix_; }
-  inline glm::vec3 getCenter() { return center_; }
-  inline glm::vec3 getColor() { return color_; }
-  inline float getradius() { return radius_; }
+  inline glm::mat4 GetModelMatrix() { return model_matrix_; }
+  inline glm::vec3 GetCenter() { return center_; }
+  inline glm::vec3 GetColor() { return color_; }
+  inline float GetRadius() { return radius_; }
 
-  void moveUp(float delta_time);
-  void moveDown(float delta_time);
-  void moveRight(float delta_time);
-  void moveLeft(float delta_time);
+  void MoveUp(float delta_time);
+  void MoveDown(float delta_time);
+  void MoveRight(float delta_time);
+  void MoveLeft(float delta_time);
 
  private:
-  void updateModelMatrix();
+  void UpdateModelMatrix();
 
   float kDefaultRadius = 0.5, kDefaultSpeed = 1.8;
 
