@@ -17,6 +17,7 @@ const glm::vec3 Game::kTableSlateColor = glm::vec3(0, 0.5, 0.1),
                 Game::kTableRailColor = glm::vec3(0.4, 0.05, 0.05),
                 Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
                 Game::kPlayerTwoColor = glm::vec3(0.96, 0.76, 0.05);
+const float Game::kMovementSpeed = 2.0f;
 
 Game::Game() {}
 
@@ -33,30 +34,32 @@ void Game::Init() {
     glm::vec3 corner = glm::vec3(-kTableWidth / 2 + kTableThickness, 0, 0);
     pockets.push_back(new Ball("pocket1", corner, kPocketRadius, pure_black));
     pockets.push_back(new Ball(
-        "pocket2",
-        corner + glm::vec3(0, 0, kTableLength / 2 - kTableThickness),
+        "pocket2", corner + glm::vec3(0, 0, kTableLength / 2 - kTableThickness),
         kPocketRadius, pure_black));
-    pockets.push_back(new Ball(
-        "pocket3",
-        corner + glm::vec3(0, 0, -kTableLength / 2 + kTableThickness),
-        kPocketRadius, pure_black));
+    pockets.push_back(
+        new Ball("pocket3",
+                 corner + glm::vec3(0, 0, -kTableLength / 2 + kTableThickness),
+                 kPocketRadius, pure_black));
     corner = glm::vec3(kTableWidth / 2 - kTableThickness, 0, 0);
     pockets.push_back(new Ball("pocket4", corner, kPocketRadius, pure_black));
     pockets.push_back(new Ball(
-        "pocket5",
-        corner + glm::vec3(0, 0, kTableLength / 2 - kTableThickness),
+        "pocket5", corner + glm::vec3(0, 0, kTableLength / 2 - kTableThickness),
         kPocketRadius, pure_black));
-    pockets.push_back(new Ball(
-        "pocket6",
-        corner + glm::vec3(0, 0, -kTableLength / 2 + kTableThickness),
-        kPocketRadius, pure_black));
-
+    pockets.push_back(
+        new Ball("pocket6",
+                 corner + glm::vec3(0, 0, -kTableLength / 2 + kTableThickness),
+                 kPocketRadius, pure_black));
   }
 
   {
-    glm::vec3 ball_center = glm::vec3(0, kBallRadius, -kTableLength / 5);
-    glm::vec3 ball_color = kPlayerOneColor;
-    std::string ball_name;
+    glm::vec3 ball_center =
+        glm::vec3(0, kBallRadius, (kTableLength - 2 * kTableThickness) / 4);
+    glm::vec3 ball_color = glm::vec3(0.9, 0.9, 0.9);
+    std::string ball_name = "cue_ball";
+    balls.push_back(new Ball(ball_name, ball_center, kBallRadius, ball_color));
+
+    ball_center = glm::vec3(0, kBallRadius, -kTableLength / 5);
+    ball_color = kPlayerOneColor;
     float row_offset = std::sqrt(pow(2 * kBallRadius, 2) - pow(kBallRadius, 2));
     int ball_count = 0;
     for (auto i = 0; i < 5; i++) {
@@ -78,12 +81,6 @@ void Game::Init() {
       ball_center.x -= kBallRadius;
       ball_center.z -= row_offset;
     }
-
-    ball_center =
-        glm::vec3(0, kBallRadius, (kTableLength - 2 * kTableThickness) / 4);
-    ball_color = glm::vec3(0.9, 0.9, 0.9);
-    ball_name = "cue_ball";
-    balls.push_back(new Ball(ball_name, ball_center, kBallRadius, ball_color));
   }
 
   {
@@ -133,12 +130,12 @@ void Game::Update(float deltaTimeSeconds) {
   {
     RenderMesh(table, shaders["VertexColor"], glm::mat4(1));
     for (auto ball : balls) {
-      RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"], ball->model_matrix_,
-                       ball->color_);
+      RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"],
+                       ball->getModelMatrix(), ball->getColor());
     }
     for (auto pocket : pockets) {
       RenderSimpleMesh((Mesh *)pocket, shaders["PoolShader"],
-                       pocket->model_matrix_, pocket->color_);
+                       pocket->getModelMatrix(), pocket->getColor());
     }
   }
 
@@ -213,23 +210,43 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
 // https://github.com/UPB-Graphics/Framework-EGC/blob/master/Source/Core/Window/InputController.h
 
 void Game::OnInputUpdate(float deltaTime, int mods) {
-  float speed = 2;
-
   if (!window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
-    glm::vec3 up = glm::vec3(0, 1, 0);
-    glm::vec3 right = GetSceneCamera()->transform->GetLocalOXVector();
-    glm::vec3 forward = GetSceneCamera()->transform->GetLocalOZVector();
-    forward = glm::normalize(glm::vec3(forward.x, 0, forward.z));
+    if (mods == GLFW_MOD_CONTROL) {
+      glm::vec3 up = glm::vec3(0, 1, 0);
+      glm::vec3 right = GetSceneCamera()->transform->GetLocalOXVector();
+      glm::vec3 forward = GetSceneCamera()->transform->GetLocalOZVector();
+      forward = glm::normalize(glm::vec3(forward.x, 0, forward.z));
 
-    // Control light position using on W, A, S, D, E, Q
-    if (window->KeyHold(GLFW_KEY_W))
-      lightPosition -= forward * deltaTime * speed;
-    if (window->KeyHold(GLFW_KEY_A)) lightPosition -= right * deltaTime * speed;
-    if (window->KeyHold(GLFW_KEY_S))
-      lightPosition += forward * deltaTime * speed;
-    if (window->KeyHold(GLFW_KEY_D)) lightPosition += right * deltaTime * speed;
-    if (window->KeyHold(GLFW_KEY_E)) lightPosition += up * deltaTime * speed;
-    if (window->KeyHold(GLFW_KEY_Q)) lightPosition -= up * deltaTime * speed;
+      // Control light position using on W, A, S, D, E, Q
+      if (window->KeyHold(GLFW_KEY_W))
+        lightPosition -= forward * deltaTime * kMovementSpeed;
+      if (window->KeyHold(GLFW_KEY_A))
+        lightPosition -= right * deltaTime * kMovementSpeed;
+      if (window->KeyHold(GLFW_KEY_S))
+        lightPosition += forward * deltaTime * kMovementSpeed;
+      if (window->KeyHold(GLFW_KEY_D))
+        lightPosition += right * deltaTime * kMovementSpeed;
+      if (window->KeyHold(GLFW_KEY_E))
+        lightPosition += up * deltaTime * kMovementSpeed;
+      if (window->KeyHold(GLFW_KEY_Q))
+        lightPosition -= up * deltaTime * kMovementSpeed;
+    } else {
+      Ball *cue_ball = balls[kCueBallIndex];
+      glm::vec3 pos = cue_ball->getCenter();
+
+      if (window->KeyHold(GLFW_KEY_W) &&
+          pos.z > kTableLength / 6 + kTableThickness + kBallRadius)
+        cue_ball->moveUp(deltaTime);
+      if (window->KeyHold(GLFW_KEY_A) &&
+          pos.x > -kTableWidth / 2 + kTableThickness + kBallRadius)
+        cue_ball->moveLeft(deltaTime);
+      if (window->KeyHold(GLFW_KEY_S) &&
+          pos.z < kTableLength / 2 - kTableThickness - kBallRadius)
+        cue_ball->moveDown(deltaTime);
+      if (window->KeyHold(GLFW_KEY_D) &&
+          pos.x < kTableWidth / 2 - kTableThickness - kBallRadius)
+        cue_ball->moveRight(deltaTime);
+    }
   }
 }
 

@@ -41,6 +41,8 @@ class Game : public SimpleScene {
       kBallRadius, kPocketRadius;
   static const glm::vec3 kTableSlateColor, kTableRailColor, kPlayerOneColor,
       kPlayerTwoColor;
+  static const float kMovementSpeed;
+  static const int kBlackBallIndex = 5, kCueBallIndex = 0;
 
   glm::vec3 lightPosition;
   unsigned int materialShininess;
