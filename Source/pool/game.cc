@@ -92,13 +92,6 @@ void Game::Init() {
   }
 
   {
-    cue_ = new Cue(
-        "cue",
-        balls_[kCueBallIndex]->GetCenter() + glm::vec3(0, 0, kBallRadius),
-        kCueLength, kCueColor);
-  }
-
-  {
     Mesh *mesh = new Mesh("box");
     mesh->LoadMesh(RESOURCE_PATH::MODELS + "Primitives", "box.obj");
     meshes[mesh->GetMeshID()] = mesh;
@@ -152,8 +145,10 @@ void Game::Update(float delta_time_seconds) {
       RenderSimpleMesh((Mesh *)pocket, shaders["PoolShader"],
                        pocket->GetModelMatrix(), pocket->GetColor());
     }
-    RenderSimpleMesh((Mesh *)cue_, shaders["PoolShader"],
-                     cue_->GetModelMatrix(), cue_->GetColor());
+
+    if (GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson)
+      RenderSimpleMesh((Mesh *)cue_, shaders["PoolShader"],
+                       cue_->GetModelMatrix(), cue_->GetColor());
   }
 
   // Render the point light in the scene
@@ -240,7 +235,8 @@ void Game::OnInputUpdate(float delta_time, int mods) {
         light_position_ += up * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_Q))
         light_position_ -= up * delta_time * kMovementSpeed;
-    } else {
+    } else if (GetSceneCamera()->type ==
+               EngineComponents::CameraType::FirstPerson) {
       Ball *cue_ball = balls_[kCueBallIndex];
       glm::vec3 pos = cue_ball->GetCenter();
 
@@ -276,6 +272,8 @@ void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
     GetSceneCamera()->RotateOX((float)-delta_y);
     GetSceneCamera()->MoveForward(-kCueBallViewDistance);
     GetSceneCamera()->Update();
+
+    cue_->Rotate(-delta_x);
   }
 }
 
@@ -314,10 +312,14 @@ void Game::ThirdPersonView() {
         GetViewPoint(default_target, glm::vec2(ball_center.x, ball_center.z));
 
     GetSceneCamera()->type = EngineComponents::CameraType::ThirdPerson;
+    GetSceneCamera()->RotateOX(750);
     GetSceneCamera()->SetPosition(
         glm::vec3(view_point.x, kCueBallViewHeight, view_point.y));
-    GetSceneCamera()->RotateOX(750);
+    GetSceneCamera()->RotateOY((view_point.x - default_target.x) * 360);
     GetSceneCamera()->Update();
+
+    cue_ = new Cue("cue", ball_center, kCueLength, kCueColor);
+    cue_->Rotate((view_point.x - ball_center.x) * 360);
   }
 }
 }  // namespace pool
