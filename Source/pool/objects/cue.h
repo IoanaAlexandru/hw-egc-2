@@ -19,7 +19,7 @@ class Cue : Mesh {
   void Rotate(float delta_x);
 
  private:
-  float kDefaultLength = 18.5, kDefaultSpeed = 1.8;
+  float kDefaultLength = 18.5f, kDefaultSpeed = 1.8f;
 
   glm::mat4 model_matrix_ = glm::mat4(1);
   glm::vec3 color_;

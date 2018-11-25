@@ -273,7 +273,7 @@ void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
     GetSceneCamera()->MoveForward(-kCueBallViewDistance);
     GetSceneCamera()->Update();
 
-    cue_->Rotate(-delta_x);
+    cue_->Rotate((float)-delta_x);
   }
 }
 
