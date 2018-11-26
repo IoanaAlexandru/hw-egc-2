@@ -257,7 +257,11 @@ void Game::OnInputUpdate(float delta_time, int mods) {
 }
 
 void Game::OnKeyPress(int key, int mods) {
-  if (key == GLFW_KEY_SPACE) ThirdPersonView();
+  if (key == GLFW_KEY_SPACE)
+    if (GetSceneCamera()->type == EngineComponents::CameraType::FirstPerson)
+      ThirdPersonView();
+    else
+      TopDownView();
 }
 
 void Game::OnKeyRelease(int key, int mods) {
