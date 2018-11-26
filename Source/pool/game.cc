@@ -21,7 +21,7 @@ const glm::vec3 Game::kTableSlateColor = glm::vec3(0, 0.5, 0.1),
                 Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
                 Game::kPlayerTwoColor = glm::vec3(0.96, 0.76, 0.05);
 const float Game::kMovementSpeed = 2.0f, Game::kCueBallViewDistance = 0.8f,
-            Game::kCueBallViewHeight = 0.3f;
+            Game::kCueBallViewHeight = 0.3f, Game::kMaxCueOffset = 2.0f;
 
 Game::Game() {}
 
@@ -139,16 +139,16 @@ void Game::Update(float delta_time_seconds) {
     RenderMesh(table_, shaders["VertexColor"], glm::mat4(1));
     for (auto ball : balls_) {
       RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"],
-                       ball->GetModelMatrix(), ball->GetColor());
+                       ball->GetModelMatrix(), 0, ball->GetColor());
     }
     for (auto pocket : pockets_) {
       RenderSimpleMesh((Mesh *)pocket, shaders["PoolShader"],
-                       pocket->GetModelMatrix(), pocket->GetColor());
+                       pocket->GetModelMatrix(), 0, pocket->GetColor());
     }
 
     if (GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson)
       RenderSimpleMesh((Mesh *)cue_, shaders["PoolShader"],
-                       cue_->GetModelMatrix(), cue_->GetColor());
+                       cue_->GetModelMatrix(), cue_offset_, cue_->GetColor());
   }
 
   // Render the point light in the scene
@@ -163,7 +163,7 @@ void Game::Update(float delta_time_seconds) {
 void Game::FrameEnd() { DrawCoordinatSystem(); }
 
 void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
-                            const glm::mat4 &model_matrix,
+                            const glm::mat4 &model_matrix, float z_offset,
                             const glm::vec3 &color) {
   if (!mesh || !shader || !shader->GetProgramID()) return;
 
@@ -190,6 +190,9 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
 
   GLint colorP = glGetUniformLocation(shader->program, "object_color");
   glUniform3fv(colorP, 1, glm::value_ptr(color));
+
+  GLint offset = glGetUniformLocation(shader->program, "z_offset");
+  glUniform1f(offset, z_offset);
 
   // Bind model matrix
   GLint loc_model_matrix = glGetUniformLocation(shader->program, "Model");
@@ -253,6 +256,12 @@ void Game::OnInputUpdate(float delta_time, int mods) {
           pos.x < kTableWidth / 2 - kTableThickness - kBallRadius)
         cue_ball->MoveRight(delta_time);
     }
+  }
+
+  if (window->MouseHold(GLFW_MOUSE_BUTTON_LEFT)) {
+    if (cue_offset_ >= kMaxCueOffset || cue_offset_ <= 0)
+      cue_movement_speed_ *= -1;
+    cue_offset_ += cue_movement_speed_ * delta_time;
   }
 }
 
@@ -324,6 +333,8 @@ void Game::ThirdPersonView() {
 
     cue_ = new Cue("cue", ball_center, kCueLength, kCueColor);
     cue_->Rotate((view_point.x - ball_center.x) * 360);
+    cue_offset_ = 0;
+    cue_movement_speed_ = kMovementSpeed;
   }
 }
 }  // namespace pool

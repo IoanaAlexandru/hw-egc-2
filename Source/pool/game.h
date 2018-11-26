@@ -23,7 +23,7 @@ class Game : public SimpleScene {
   void FrameEnd() override;
 
   void RenderSimpleMesh(Mesh *mesh, Shader *shader,
-                        const glm::mat4 &model_matrix,
+                        const glm::mat4 &model_matrix, float z_offset,
                         const glm::vec3 &color = glm::vec3(1));
 
   void OnInputUpdate(float delta_time, int mods) override;
@@ -45,13 +45,16 @@ class Game : public SimpleScene {
       kBallRadius, kPocketRadius, kCueLength;
   static const glm::vec3 kTableSlateColor, kTableRailColor, kCueColor,
       kPlayerOneColor, kPlayerTwoColor;
-  static const float kMovementSpeed, kCueBallViewDistance, kCueBallViewHeight;
+  static const float kMovementSpeed, kCueBallViewDistance, kCueBallViewHeight,
+      kMaxCueOffset;
   static const int kBlackBallIndex = 5, kCueBallIndex = 0;
 
   glm::vec3 light_position_;
   unsigned int ball_shininess_;
   float ball_kd_;
   float ball_ks_;
+  float cue_offset_;
+  float cue_movement_speed_;
 
   Table *table_;
   Cue *cue_;
