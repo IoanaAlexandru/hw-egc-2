@@ -25,6 +25,9 @@ class Ball : Mesh {
 
   void CueHit(glm::vec3 direction, float distance);
 
+  void ReflectX();
+  void ReflectZ();
+
  private:
   void UpdateModelMatrix();
 

@@ -135,6 +135,20 @@ void Game::FrameStart() {
 }
 
 void Game::Update(float delta_time_seconds) {
+  // Collisions
+  {
+    for (auto ball : balls_) {
+      glm::vec3 center = ball->GetCenter();
+
+      if (center.z + kBallRadius >= kTableLength / 2 - kTableThickness ||
+        center.z - kBallRadius <= -kTableLength / 2 + kTableThickness)
+        ball->ReflectZ();
+      if (center.x + kBallRadius >= kTableWidth / 2 - kTableThickness ||
+          center.x - kBallRadius <= -kTableWidth / 2 + kTableThickness)
+        ball->ReflectX();
+    }
+  }
+
   {
     RenderMesh(table_, shaders["VertexColor"], glm::mat4(1));
     for (auto ball : balls_) {

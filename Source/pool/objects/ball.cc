@@ -52,6 +52,10 @@ void Ball::CueHit(glm::vec3 direction, float distance) {
   movement_vector_ = direction * distance;
 }
 
+void Ball::ReflectX() { movement_vector_.x *= -1; }
+
+void Ball::ReflectZ() { movement_vector_.z *= -1; }
+
 void Ball::UpdateModelMatrix() {
   model_matrix_ = glm::translate(glm::mat4(1), center_);
   model_matrix_ = glm::scale(model_matrix_, scale_);
