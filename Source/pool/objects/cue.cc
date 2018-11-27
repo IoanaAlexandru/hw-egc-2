@@ -1,6 +1,7 @@
 #include "pool/objects/cue.h"
 
 #include <Core/Managers/ResourcePath.h>
+#include <iostream>
 
 namespace pool {
 Cue::Cue(std::string name, glm::vec3 tip, float length, glm::vec3 color)
@@ -21,7 +22,11 @@ Cue::~Cue(){};
 
 void Cue::Rotate(float delta_x) {
   // TODO how to calculate the right value instead of hard coding?
+  float angle = delta_x * 0.0035f;
   model_matrix_ =
-      glm::rotate(model_matrix_, delta_x * 0.0035f, glm::vec3(0, 1, 0));
+      glm::rotate(model_matrix_, angle, glm::vec3(0, 1, 0));
+  float x = direction_.x, z = direction_.z;
+  direction_.x = x * cos(-angle) - z * sin(-angle);
+  direction_.z = x * sin(-angle) + z * cos(-angle);
 }
 }  // namespace pool
