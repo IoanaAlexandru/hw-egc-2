@@ -60,6 +60,8 @@ class Game : public SimpleScene {
   Cue *cue_;
   std::vector<Ball *> pockets_;
   std::vector<Ball *> balls_;
+
+  bool place_cue_ball_ = true;
 };
 }  // namespace pool
 

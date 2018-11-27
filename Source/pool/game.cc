@@ -137,15 +137,23 @@ void Game::FrameStart() {
 void Game::Update(float delta_time_seconds) {
   // Collisions
   {
-    for (auto ball : balls_) {
-      glm::vec3 center = ball->GetCenter();
+    if (GetSceneCamera()->type == EngineComponents::CameraType::FirstPerson) {
+      bool none_moving = true;
+      for (auto ball : balls_) {
+        glm::vec3 center = ball->GetCenter();
 
-      if (center.z + kBallRadius >= kTableLength / 2 - kTableThickness ||
-        center.z - kBallRadius <= -kTableLength / 2 + kTableThickness)
-        ball->ReflectZ();
-      if (center.x + kBallRadius >= kTableWidth / 2 - kTableThickness ||
-          center.x - kBallRadius <= -kTableWidth / 2 + kTableThickness)
-        ball->ReflectX();
+        if (center.z + kBallRadius >= kTableLength / 2 - kTableThickness ||
+            center.z - kBallRadius <= -kTableLength / 2 + kTableThickness)
+          ball->ReflectZ();
+        if (center.x + kBallRadius >= kTableWidth / 2 - kTableThickness ||
+            center.x - kBallRadius <= -kTableWidth / 2 + kTableThickness)
+          ball->ReflectX();
+
+        if (ball->IsMoving()) none_moving = false;
+      }
+
+      if (none_moving && !place_cue_ball_)
+        ThirdPersonView();  // start next shot
     }
   }
 
@@ -281,11 +289,7 @@ void Game::OnInputUpdate(float delta_time, int mods) {
 }
 
 void Game::OnKeyPress(int key, int mods) {
-  if (key == GLFW_KEY_SPACE)
-    if (GetSceneCamera()->type == EngineComponents::CameraType::FirstPerson)
-      ThirdPersonView();
-    else
-      TopDownView();
+  if (key == GLFW_KEY_SPACE) place_cue_ball_ = false;
 }
 
 void Game::OnKeyRelease(int key, int mods) {
@@ -350,6 +354,8 @@ void Game::ThirdPersonView() {
         glm::vec3(view_point.x, kCueBallViewHeight, view_point.y));
     GetSceneCamera()->RotateOY((view_point.x - default_target.x) * 360);
     GetSceneCamera()->Update();
+
+    place_cue_ball_ = false;
 
     cue_ = new Cue("cue", ball_center, kCueLength, kCueColor);
     cue_->Rotate((view_point.x - ball_center.x) * 360);

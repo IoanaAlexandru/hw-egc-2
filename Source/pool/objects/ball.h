@@ -18,6 +18,8 @@ class Ball : Mesh {
   inline glm::vec3 GetColor() { return color_; }
   inline float GetRadius() { return radius_; }
 
+  inline bool IsMoving() { return movement_vector_ != glm::vec3(0, 0, 0); }
+
   void MoveUp(float delta_time);
   void MoveDown(float delta_time);
   void MoveRight(float delta_time);

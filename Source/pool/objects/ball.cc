@@ -26,6 +26,11 @@ void Ball::Update(float delta_time) {
   glm::vec3 movement = delta_time * movement_vector_;
   center_ += movement;
   UpdateModelMatrix();
+
+  movement_vector_ *= 0.995;
+  if (abs(movement_vector_.x) < 0.1 && abs(movement_vector_.z) < 0.1) {
+    movement_vector_ = glm::vec3(0, 0, 0);
+  }
 }
 
 void Ball::MoveUp(float delta_time) {
