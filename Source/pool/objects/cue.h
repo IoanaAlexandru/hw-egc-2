@@ -14,6 +14,7 @@ class Cue : Mesh {
   inline glm::mat4 GetModelMatrix() { return model_matrix_; }
   inline glm::vec3 GetTip() { return tip_; }
   inline glm::vec3 GetColor() { return color_; }
+  inline glm::vec3 GetDirection() { return direction_; }
   inline float GetLength() { return length_; }
 
   void Rotate(float delta_x);
@@ -25,6 +26,7 @@ class Cue : Mesh {
   glm::vec3 color_;
   float length_;
   glm::vec3 tip_, initial_tip_, scale_;
+  glm::vec3 direction_;
 };
 }  // namespace pool
 

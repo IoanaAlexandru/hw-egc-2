@@ -138,6 +138,7 @@ void Game::Update(float delta_time_seconds) {
   {
     RenderMesh(table_, shaders["VertexColor"], glm::mat4(1));
     for (auto ball : balls_) {
+      ball->Update(delta_time_seconds);
       RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"],
                        ball->GetModelMatrix(), 0, ball->GetColor());
     }
@@ -295,7 +296,12 @@ void Game::OnMouseBtnPress(int mouse_x, int mouse_y, int button, int mods) {
 }
 
 void Game::OnMouseBtnRelease(int mouse_x, int mouse_y, int button, int mods) {
-  // add mouse button release event
+  if (button == 1 &&  // GLFW_MOUSE_BUTTON_LEFT not working?
+      cue_offset_ >= 0 &&
+      GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson) {
+    balls_[kCueBallIndex]->CueHit(cue_->GetDirection(), -cue_offset_);
+    TopDownView();
+  }
 }
 
 void Game::OnMouseScroll(int mouse_x, int mouse_y, int offset_x, int offset_y) {

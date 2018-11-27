@@ -10,6 +10,7 @@ Cue::Cue(std::string name, glm::vec3 tip, float length, glm::vec3 color)
     tip_ = initial_tip_ = tip;
     color_ = color;
     length = length;
+    direction_ = glm::vec3(0, 0, 1);
     model_matrix_ = glm::translate(model_matrix_, tip);
     scale_ = glm::vec3(length / kDefaultLength);
     model_matrix_ = glm::scale(model_matrix_, scale_);

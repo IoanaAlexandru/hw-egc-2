@@ -11,6 +11,8 @@ class Ball : Mesh {
   Ball(std::string name, glm::vec3 center, float radius, glm::vec3 color);
   ~Ball();
 
+  void Update(float delta_time);
+
   inline glm::mat4 GetModelMatrix() { return model_matrix_; }
   inline glm::vec3 GetCenter() { return center_; }
   inline glm::vec3 GetColor() { return color_; }
@@ -21,6 +23,8 @@ class Ball : Mesh {
   void MoveRight(float delta_time);
   void MoveLeft(float delta_time);
 
+  void CueHit(glm::vec3 direction, float distance);
+
  private:
   void UpdateModelMatrix();
 
@@ -30,6 +34,7 @@ class Ball : Mesh {
   glm::vec3 color_;
   float radius_;
   glm::vec3 center_, initial_center_, scale_;
+  glm::vec3 movement_vector_;
 };
 }  // namespace pool
 
