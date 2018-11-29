@@ -149,14 +149,15 @@ void Game::Update(float delta_time_seconds) {
             center.x - kBallRadius <= -kTableWidth / 2 + kTableThickness)
           ball->ReflectX();
 
-        if (ball->IsMoving())
+        if (ball->IsMoving()) {
           none_moving = false;
 
-        for (auto another_ball : balls_) {
-          if (another_ball == ball) continue;
-          if (Ball::AreTouching(ball, another_ball)) {
-            Ball::Bounce(ball, another_ball);
-            break;
+          for (auto another_ball : balls_) {
+            if (another_ball == ball) continue;
+            if (Ball::DynamicStaticCollision(ball, another_ball)) {
+              Ball::Bounce(ball, another_ball);
+              break;
+            }
           }
         }
       }

@@ -110,10 +110,6 @@ bool Ball::DynamicStaticCollision(Ball *ball1, Ball *ball2) {
   // Make sure the distance is not greater than the ball's speed
   if (speed < distance) return false;
 
-  // Set the length of the movement vector so the circles will just touch
-  v = glm::normalize(v);
-  ball1->SetMoveVec(distance * v);
-
   return true;
 }
 
@@ -141,7 +137,7 @@ void Ball::Bounce(Ball *ball1, Ball *ball2) {
 
   // Calculate new movement vectors
   ball1->SetMoveVec(v1 - optimized * m2 * n);
-  ball1->SetMoveVec(v2 + optimized * m1 * n);
+  ball2->SetMoveVec(v2 + optimized * m1 * n);
 }
 
 void Ball::UpdateModelMatrix() {

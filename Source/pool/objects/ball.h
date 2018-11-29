@@ -44,7 +44,7 @@ class Ball : public Mesh {
  private:
   void UpdateModelMatrix();
 
-  float kDefaultRadius = 0.5f, kDefaultSpeed = 1.8f, kMass = 10.0f;
+  float kDefaultRadius = 0.5f, kDefaultSpeed = 1.8f, kMass = 1.0f;
 
   glm::mat4 model_matrix_ = glm::mat4(1);
   glm::vec3 color_;
