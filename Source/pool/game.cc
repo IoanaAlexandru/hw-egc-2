@@ -149,7 +149,15 @@ void Game::Update(float delta_time_seconds) {
             center.x - kBallRadius <= -kTableWidth / 2 + kTableThickness)
           ball->ReflectX();
 
-        if (ball->IsMoving()) none_moving = false;
+        if (ball->IsMoving()) {
+          for (auto another_ball : balls_) {
+            if (another_ball == ball) continue;
+            if (Ball::AreTouching(ball, another_ball))
+              std::cout << ball->GetMeshID() << " touches "
+                        << another_ball->GetMeshID() << std::endl;
+          }
+          none_moving = false;
+        }
       }
 
       if (none_moving && !place_cue_ball_)

@@ -61,6 +61,12 @@ void Ball::ReflectX() { movement_vector_.x *= -1; }
 
 void Ball::ReflectZ() { movement_vector_.z *= -1; }
 
+bool Ball::AreTouching(Ball *ball1, Ball *ball2) {
+  float centers_distance = sqrt(pow(ball1->GetCenter().x - ball2->GetCenter().x, 2) +
+                                pow(ball1->GetCenter().z - ball2->GetCenter().z, 2));
+  return centers_distance <= ball1->GetRadius() + ball2->GetRadius();
+}
+
 void Ball::UpdateModelMatrix() {
   model_matrix_ = glm::translate(glm::mat4(1), center_);
   model_matrix_ = glm::scale(model_matrix_, scale_);

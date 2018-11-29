@@ -4,7 +4,7 @@
 #include "Core/GPU/Mesh.h"
 
 namespace pool {
-class Ball : Mesh {
+class Ball : public Mesh {
  public:
   Ball(std::string name, glm::vec3 center, float radius, glm::vec3 color);
   ~Ball();
@@ -27,6 +27,8 @@ class Ball : Mesh {
 
   void ReflectX();
   void ReflectZ();
+
+  static bool AreTouching(Ball* ball1, Ball* ball2);
 
  private:
   void UpdateModelMatrix();
