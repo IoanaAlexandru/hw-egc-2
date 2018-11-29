@@ -69,6 +69,55 @@ bool Ball::AreTouching(Ball *ball1, Ball *ball2) {
 }
 
 /*
+Collision detection between a moving ball and a stationary one as per the
+algorithm at
+http://www.gamasutra.com/view/feature/131424/pool_hall_lessons_fast_accurate_.php?page=2
+*/
+bool Ball::DynamicStaticCollision(Ball *ball1, Ball *ball2) {
+  glm::vec3 v = ball1->GetMoveVec();
+  glm::vec3 c1 = ball1->GetCenter();
+  glm::vec3 c2 = ball2->GetCenter();
+  float r1 = ball1->GetRadius();
+  float r2 = ball2->GetRadius();
+  float speed = ball1->GetSpeed();
+
+  // If the length of the movement vector is less than the distance between the
+  // centers of the balls minus their radii, they can't hit
+  float dist = glm::distance(c2, c1);
+  float sum_radii = r2 + r1;
+  dist -= sum_radii;
+  if (speed < dist) return false;
+
+  // Normalize movement vector
+  glm::vec3 n = glm::normalize(v);
+
+  // Find vector between centers
+  glm::vec3 c = c2 - c1;
+  float c_len = glm::length(c);
+
+  // Make sure ball1 is moving towards ball2
+  float d = glm::dot(n, c);
+  if (d <= 0) return false;
+
+  // If the closest that ball1 will get to ball2 is more than the sum of their
+  // radii, they can't hit
+  float t = sum_radii * sum_radii - c_len * c_len - d * d;
+  if (0 >= t) return false;
+
+  // Compute the distance the ball has to travel along the movement vector
+  float distance = d - sqrt(t);
+
+  // Make sure the distance is not greater than the ball's speed
+  if (speed < distance) return false;
+
+  // Set the length of the movement vector so the circles will just touch
+  v = glm::normalize(v);
+  ball1->SetMoveVec(distance * v);
+
+  return true;
+}
+
+/*
 Make balls bounce off each other as per the algorithm at
 http://www.gamasutra.com/view/feature/131424/pool_hall_lessons_fast_accurate_.php?page=3.
  */

@@ -38,6 +38,7 @@ class Ball : public Mesh {
   void ReflectZ();
 
   static bool AreTouching(Ball* ball1, Ball* ball2);
+  static bool DynamicStaticCollision(Ball* ball1, Ball* ball2);
   static void Bounce(Ball* ball1, Ball* ball2);
 
  private:
