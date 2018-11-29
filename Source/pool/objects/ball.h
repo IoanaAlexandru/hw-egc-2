@@ -3,8 +3,6 @@
 
 #include "Core/GPU/Mesh.h"
 
-#pragma once
-
 namespace pool {
 class Ball : Mesh {
  public:

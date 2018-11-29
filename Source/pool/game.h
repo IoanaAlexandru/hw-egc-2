@@ -1,7 +1,6 @@
 #ifndef POOL_GAME_H_
 #define POOL_GAME_H_
 
-#pragma once
 #include <Component/SimpleScene.h>
 #include <Component/Transform/Transform.h>
 #include <Core/GPU/Mesh.h>
