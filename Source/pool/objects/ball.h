@@ -17,6 +17,9 @@ class Ball : public Mesh {
   inline float GetRadius() { return radius_; }
 
   inline bool IsMoving() { return movement_vector_ != glm::vec3(0, 0, 0); }
+  inline float GetSpeed() {
+    return sqrt(pow(movement_vector_.x, 2) + pow(movement_vector_.z, 2));
+  }
 
   void MoveUp(float delta_time);
   void MoveDown(float delta_time);
