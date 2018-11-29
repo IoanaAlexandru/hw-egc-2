@@ -62,9 +62,37 @@ void Ball::ReflectX() { movement_vector_.x *= -1; }
 void Ball::ReflectZ() { movement_vector_.z *= -1; }
 
 bool Ball::AreTouching(Ball *ball1, Ball *ball2) {
-  float centers_distance = sqrt(pow(ball1->GetCenter().x - ball2->GetCenter().x, 2) +
-                                pow(ball1->GetCenter().z - ball2->GetCenter().z, 2));
+  float centers_distance =
+      sqrt(pow(ball1->GetCenter().x - ball2->GetCenter().x, 2) +
+           pow(ball1->GetCenter().z - ball2->GetCenter().z, 2));
   return centers_distance <= ball1->GetRadius() + ball2->GetRadius();
+}
+
+/*
+Make balls bounce off each other as per the algorithm at
+http://www.gamasutra.com/view/feature/131424/pool_hall_lessons_fast_accurate_.php?page=3.
+ */
+void Ball::Bounce(Ball *ball1, Ball *ball2) {
+  // Get movement vectors and masses of balls
+  glm::vec3 v1 = ball1->GetMoveVec();
+  glm::vec3 v2 = ball2->GetMoveVec();
+  float m1 = ball1->GetMass();
+  float m2 = ball2->GetMass();
+
+  // Find normalized vector between the centers of the balls
+  glm::vec3 n = ball1->GetCenter() - ball2->GetCenter();
+  n = glm::normalize(n);
+
+  // Find the length of the component of each of the movement
+  // vectors along n.
+  float a1 = glm::dot(v1, n);
+  float a2 = glm::dot(v2, n);
+
+  float optimized = (2.0f * (a1 - a2)) / (m1 + m2);
+
+  // Calculate new movement vectors
+  ball1->SetMoveVec(v1 - optimized * m2 * n);
+  ball1->SetMoveVec(v2 + optimized * m1 * n);
 }
 
 void Ball::UpdateModelMatrix() {
