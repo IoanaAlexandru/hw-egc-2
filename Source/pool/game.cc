@@ -154,7 +154,7 @@ void Game::Update(float delta_time_seconds) {
 
           for (auto another_ball : balls_) {
             if (another_ball == ball) continue;
-            if (Ball::DynamicStaticCollision(ball, another_ball)) {
+            if (Ball::CheckCollision(ball, another_ball)) {
               Ball::Bounce(ball, another_ball);
               break;
             }

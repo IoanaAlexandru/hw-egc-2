@@ -38,11 +38,13 @@ class Ball : public Mesh {
   void ReflectZ();
 
   static bool AreTouching(Ball* ball1, Ball* ball2);
-  static bool DynamicStaticCollision(Ball* ball1, Ball* ball2);
+  static bool CheckCollision(Ball* ball1, Ball* ball2);
   static void Bounce(Ball* ball1, Ball* ball2);
 
  private:
   void UpdateModelMatrix();
+  static bool DynamicStaticCollision(Ball* ball1, Ball* ball2);
+  static bool DynamicDynamicCollision(Ball* ball1, Ball* ball2);
 
   float kDefaultRadius = 0.5f, kDefaultSpeed = 1.8f, kMass = 1.0f;
 

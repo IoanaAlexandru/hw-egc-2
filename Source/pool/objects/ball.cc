@@ -113,6 +113,28 @@ bool Ball::DynamicStaticCollision(Ball *ball1, Ball *ball2) {
   return true;
 }
 
+bool Ball::DynamicDynamicCollision(Ball *ball1, Ball *ball2) {
+  glm::vec3 v1 = ball1->GetMoveVec();
+  glm::vec3 v2 = ball2->GetMoveVec();
+
+  // We consider ball2 to be stationary
+  ball1->SetMoveVec(v1 - v2);
+  bool colliding = DynamicStaticCollision(ball1, ball2);
+
+  // Reverting movement vector
+  ball1->SetMoveVec(v1);
+  return colliding;
+}
+
+/*
+Check if moving ball1 collides with ball2.
+*/
+bool Ball::CheckCollision(Ball *ball1, Ball *ball2) {
+  if (ball2->IsMoving())
+    return DynamicDynamicCollision(ball1, ball2);
+  return DynamicStaticCollision(ball1, ball2);
+}
+
 /*
 Make balls bounce off each other as per the algorithm at
 http://www.gamasutra.com/view/feature/131424/pool_hall_lessons_fast_accurate_.php?page=3.
