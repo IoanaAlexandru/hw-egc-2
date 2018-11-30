@@ -11,9 +11,9 @@ using namespace std;
 
 namespace pool {
 
-const float Game::kTableWidth = 2.2f, Game::kTableLength = 4.3f,
+const float Game::kTableWidth = 2.16f, Game::kTableLength = 4.26f,
             Game::kBallRadius = 0.07f, Game::kCueLength = 2.6f,
-            Game::kPocketRadius = 0.08f;
+            Game::kPocketRadius = 0.12f, Game::kTableBedBorder = 0.08f;
 const glm::vec3 Game::kTableBedColor = glm::vec3(0, 0.5, 0.1),
                 Game::kTableColor = glm::vec3(0.3, 0.05, 0.05),
                 Game::kTableMetalColor = glm::vec3(0.8, 0.8, 0.8),
@@ -44,6 +44,26 @@ void Game::Init() {
 
     table_metal_ = new Mesh("table_metal");
     table_metal_->LoadMesh(RESOURCE_PATH::MODELS + "Props", "table_metal.obj");
+
+    glm::vec3 pure_black = glm::vec3(0, 0, 0);
+    glm::vec3 corner = glm::vec3(-kTableWidth / 2 - kTableBedBorder, 0, 0);
+    pockets_.push_back(new Ball("middle_left", corner, kPocketRadius, pure_black));
+    pockets_.push_back(new Ball(
+        "upper_left", corner + glm::vec3(kTableBedBorder, 0, kTableLength / 2),
+        kPocketRadius, pure_black));
+    pockets_.push_back(
+        new Ball("lower_left",
+                 corner + glm::vec3(kTableBedBorder, 0, -kTableLength / 2),
+                 kPocketRadius, pure_black));
+    corner = glm::vec3(kTableWidth / 2 + kTableBedBorder, 0, 0);
+    pockets_.push_back(new Ball("middle_right", corner, kPocketRadius, pure_black));
+    pockets_.push_back(new Ball(
+        "upper_right", corner + glm::vec3(-kTableBedBorder, 0, kTableLength / 2),
+        kPocketRadius, pure_black));
+    pockets_.push_back(
+        new Ball("lower_right",
+                 corner + glm::vec3(-kTableBedBorder, 0, -kTableLength / 2),
+                 kPocketRadius, pure_black));
   }
 
   {
@@ -122,36 +142,10 @@ void Game::Update(float delta_time_seconds) {
       for (auto ball : balls_) {
         glm::vec3 center = ball->GetCenter();
 
-        if (center.z + kBallRadius >= kTableLength / 2 - kPocketRadius) {
-          if (center.x + kBallRadius >= kTableWidth / 2 - kPocketRadius) {
-            // upper right corner
-            continue;
-          }
-          if (center.x - kBallRadius <= -kTableWidth / 2 + kPocketRadius) {
-            // upper left corner
-            continue;
-          }
+        for (auto pocket : pockets_) {
+          if (Ball::CheckCollision(ball, pocket)) ball->SetPotted(true);
         }
-        if (center.z - kBallRadius <= -kTableLength / 2 + kPocketRadius) {
-          if (center.x + kBallRadius >= kTableWidth / 2 - kPocketRadius) {
-            // lower right corner
-            continue;
-          }
-          if (center.x - kBallRadius <= -kTableWidth / 2 + kPocketRadius) {
-            // lower left corner
-            continue;
-          }
-        }
-        if (abs(center.z) + kBallRadius <= kPocketRadius) {
-          if (center.x - kBallRadius >= kTableWidth / 2) {
-            // middle right pocket
-            continue;
-          }
-          if (-center.x + kBallRadius <= -kTableWidth / 2) {
-            // middle right pocket
-            continue;
-          }
-        }
+        if (ball->IsPotted()) continue;
         
         if (center.z + kBallRadius >= kTableLength / 2 ||
             center.z - kBallRadius <= -kTableLength / 2) {

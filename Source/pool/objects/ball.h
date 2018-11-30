@@ -19,6 +19,7 @@ class Ball : public Mesh {
   inline float GetMass() { return kMass; }
 
   inline bool IsMoving() { return movement_vector_ != glm::vec3(0, 0, 0); }
+  inline bool IsPotted() { return potted_; }
   inline float GetSpeed() {
     return sqrt(pow(movement_vector_.x, 2) + pow(movement_vector_.z, 2));
   }
@@ -26,6 +27,8 @@ class Ball : public Mesh {
   inline void SetMoveVec(glm::vec3 movement_vector) {
     movement_vector_ = movement_vector;
   }
+
+  inline void SetPotted(bool potted) { potted_ = potted; }
 
   void MoveUp(float delta_time);
   void MoveDown(float delta_time);
@@ -53,6 +56,8 @@ class Ball : public Mesh {
   float radius_;
   glm::vec3 center_, initial_center_, scale_;
   glm::vec3 movement_vector_;
+
+  bool potted_ = false;
 };
 }  // namespace pool
 

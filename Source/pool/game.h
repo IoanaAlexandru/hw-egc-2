@@ -39,7 +39,7 @@ class Game : public SimpleScene {
   void TopDownView();
   void ThirdPersonView();
 
-  static const float kTableWidth, kTableLength, kBallRadius, kCueLength, kPocketRadius;
+  static const float kTableWidth, kTableLength, kBallRadius, kCueLength, kPocketRadius, kTableBedBorder;
   static const glm::vec3 kTableBedColor, kTableColor, kTableMetalColor,
       kCueColor, kPlayerOneColor, kPlayerTwoColor;
   static const float kMovementSpeed, kCueBallViewDistance, kCueBallViewHeight,
@@ -57,6 +57,7 @@ class Game : public SimpleScene {
   Mesh *table_, *table_bed_, *table_metal_;
   Cue *cue_;
   std::vector<Ball *> balls_;
+  std::vector<Ball *> pockets_;
 
   bool place_cue_ball_ = true;
 };
