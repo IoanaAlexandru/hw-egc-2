@@ -12,7 +12,8 @@ using namespace std;
 namespace pool {
 
 const float Game::kTableWidth = 2.2f, Game::kTableLength = 4.3f,
-            Game::kBallRadius = 0.08f, Game::kCueLength = 2.6f;
+            Game::kBallRadius = 0.07f, Game::kCueLength = 2.6f,
+            Game::kPocketRadius = 0.08f;
 const glm::vec3 Game::kTableBedColor = glm::vec3(0, 0.5, 0.1),
                 Game::kTableColor = glm::vec3(0.3, 0.05, 0.05),
                 Game::kTableMetalColor = glm::vec3(0.8, 0.8, 0.8),
@@ -121,6 +122,37 @@ void Game::Update(float delta_time_seconds) {
       for (auto ball : balls_) {
         glm::vec3 center = ball->GetCenter();
 
+        if (center.z + kBallRadius >= kTableLength / 2 - kPocketRadius) {
+          if (center.x + kBallRadius >= kTableWidth / 2 - kPocketRadius) {
+            // upper right corner
+            continue;
+          }
+          if (center.x - kBallRadius <= -kTableWidth / 2 + kPocketRadius) {
+            // upper left corner
+            continue;
+          }
+        }
+        if (center.z - kBallRadius <= -kTableLength / 2 + kPocketRadius) {
+          if (center.x + kBallRadius >= kTableWidth / 2 - kPocketRadius) {
+            // lower right corner
+            continue;
+          }
+          if (center.x - kBallRadius <= -kTableWidth / 2 + kPocketRadius) {
+            // lower left corner
+            continue;
+          }
+        }
+        if (abs(center.z) + kBallRadius <= kPocketRadius) {
+          if (center.x - kBallRadius >= kTableWidth / 2) {
+            // middle right pocket
+            continue;
+          }
+          if (-center.x + kBallRadius <= -kTableWidth / 2) {
+            // middle right pocket
+            continue;
+          }
+        }
+        
         if (center.z + kBallRadius >= kTableLength / 2 ||
             center.z - kBallRadius <= -kTableLength / 2) {
           ball->ReflectZ();
@@ -271,9 +303,9 @@ void Game::OnInputUpdate(float delta_time, int mods) {
   }
 
   if (window->MouseHold(GLFW_MOUSE_BUTTON_LEFT)) {
+    cue_offset_ += cue_movement_speed_ * delta_time;
     if (cue_offset_ >= kMaxCueOffset || cue_offset_ <= 0)
       cue_movement_speed_ *= -1;
-    cue_offset_ += cue_movement_speed_ * delta_time;
   }
 }
 

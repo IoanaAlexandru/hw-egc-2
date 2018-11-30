@@ -39,7 +39,7 @@ class Game : public SimpleScene {
   void TopDownView();
   void ThirdPersonView();
 
-  static const float kTableWidth, kTableLength, kBallRadius, kCueLength;
+  static const float kTableWidth, kTableLength, kBallRadius, kCueLength, kPocketRadius;
   static const glm::vec3 kTableBedColor, kTableColor, kTableMetalColor,
       kCueColor, kPlayerOneColor, kPlayerTwoColor;
   static const float kMovementSpeed, kCueBallViewDistance, kCueBallViewHeight,
