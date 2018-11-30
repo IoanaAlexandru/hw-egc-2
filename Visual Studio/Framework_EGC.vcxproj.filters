@@ -76,9 +76,6 @@
     <ClCompile Include="..\Source\pool\objects\ball.cc">
       <Filter>pool\objects</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\pool\objects\table.cc">
-      <Filter>pool\objects</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\pool\game.cc">
       <Filter>pool</Filter>
     </ClCompile>
@@ -145,9 +142,6 @@
       <Filter>pool</Filter>
     </ClInclude>
     <ClInclude Include="..\Source\pool\objects\ball.h">
-      <Filter>pool\objects</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Source\pool\objects\table.h">
       <Filter>pool\objects</Filter>
     </ClInclude>
     <ClInclude Include="..\Source\pool\objects\cue.h">

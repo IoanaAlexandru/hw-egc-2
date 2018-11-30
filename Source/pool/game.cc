@@ -11,17 +11,18 @@ using namespace std;
 
 namespace pool {
 
-const float Game::kTableWidth = 2.4f, Game::kTableHeight = 0.2f,
-            Game::kTableLength = 4.4f, Game::kTableThickness = 0.2f,
-            Game::kBallRadius = 0.07f, Game::kPocketRadius = 0.15f,
-            Game::kCueLength = 2.5f;
-const glm::vec3 Game::kTableSlateColor = glm::vec3(0, 0.5, 0.1),
-                Game::kTableRailColor = glm::vec3(0.4, 0.05, 0.05),
+const float Game::kTableWidth = 2.2f, Game::kTableLength = 4.3f,
+            Game::kBallRadius = 0.08f, Game::kCueLength = 2.6f;
+const glm::vec3 Game::kTableBedColor = glm::vec3(0, 0.5, 0.1),
+                Game::kTableColor = glm::vec3(0.3, 0.05, 0.05),
+                Game::kTableMetalColor = glm::vec3(0.8, 0.8, 0.8),
                 Game::kCueColor = glm::vec3(0.5, 0.15, 0.15),
                 Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
                 Game::kPlayerTwoColor = glm::vec3(0.96, 0.76, 0.05);
 const float Game::kMovementSpeed = 2.0f, Game::kCueBallViewDistance = 0.8f,
             Game::kCueBallViewHeight = 0.3f, Game::kMaxCueOffset = 2.0f;
+const glm::mat4 Game::kTableModelMatrix =
+    glm::scale(glm::mat4(1), glm::vec3(2.0f));
 
 Game::Game() {}
 
@@ -34,34 +35,18 @@ void Game::Init() {
   }
 
   {
-    table_ = new Table("PoolTable", glm::vec3(0, 0, 0), kTableWidth,
-                       kTableLength, kTableHeight, kTableThickness,
-                       kTableSlateColor, kTableRailColor);
+    table_ = new Mesh("table");
+    table_->LoadMesh(RESOURCE_PATH::MODELS + "Props", "table.obj");
 
-    glm::vec3 pure_black = glm::vec3(0, 0, 0);
-    glm::vec3 corner = glm::vec3(-kTableWidth / 2 + kTableThickness, 0, 0);
-    pockets_.push_back(new Ball("pocket1", corner, kPocketRadius, pure_black));
-    pockets_.push_back(new Ball(
-        "pocket2", corner + glm::vec3(0, 0, kTableLength / 2 - kTableThickness),
-        kPocketRadius, pure_black));
-    pockets_.push_back(
-        new Ball("pocket3",
-                 corner + glm::vec3(0, 0, -kTableLength / 2 + kTableThickness),
-                 kPocketRadius, pure_black));
-    corner = glm::vec3(kTableWidth / 2 - kTableThickness, 0, 0);
-    pockets_.push_back(new Ball("pocket4", corner, kPocketRadius, pure_black));
-    pockets_.push_back(new Ball(
-        "pocket5", corner + glm::vec3(0, 0, kTableLength / 2 - kTableThickness),
-        kPocketRadius, pure_black));
-    pockets_.push_back(
-        new Ball("pocket6",
-                 corner + glm::vec3(0, 0, -kTableLength / 2 + kTableThickness),
-                 kPocketRadius, pure_black));
+    table_bed_ = new Mesh("table_bed");
+    table_bed_->LoadMesh(RESOURCE_PATH::MODELS + "Props", "table_bed.obj");
+
+    table_metal_ = new Mesh("table_metal");
+    table_metal_->LoadMesh(RESOURCE_PATH::MODELS + "Props", "table_metal.obj");
   }
 
   {
-    glm::vec3 ball_center =
-        glm::vec3(0, kBallRadius, (kTableLength - 2 * kTableThickness) / 4);
+    glm::vec3 ball_center = glm::vec3(0, kBallRadius, kTableLength / 4);
     glm::vec3 ball_color = glm::vec3(0.9, 0.9, 0.9);
     std::string ball_name = "cue_ball";
     balls_.push_back(new Ball(ball_name, ball_center, kBallRadius, ball_color));
@@ -89,12 +74,6 @@ void Game::Init() {
       ball_center.x -= kBallRadius;
       ball_center.z -= row_offset;
     }
-  }
-
-  {
-    Mesh *mesh = new Mesh("box");
-    mesh->LoadMesh(RESOURCE_PATH::MODELS + "Primitives", "box.obj");
-    meshes[mesh->GetMeshID()] = mesh;
   }
 
   {
@@ -142,12 +121,14 @@ void Game::Update(float delta_time_seconds) {
       for (auto ball : balls_) {
         glm::vec3 center = ball->GetCenter();
 
-        if (center.z + kBallRadius >= kTableLength / 2 - kTableThickness ||
-            center.z - kBallRadius <= -kTableLength / 2 + kTableThickness)
+        if (center.z + kBallRadius >= kTableLength / 2 ||
+            center.z - kBallRadius <= -kTableLength / 2) {
           ball->ReflectZ();
-        if (center.x + kBallRadius >= kTableWidth / 2 - kTableThickness ||
-            center.x - kBallRadius <= -kTableWidth / 2 + kTableThickness)
+        }
+        if (center.x + kBallRadius >= kTableWidth / 2 ||
+            center.x - kBallRadius <= -kTableWidth / 2) {
           ball->ReflectX();
+        }
 
         if (ball->IsMoving()) {
           none_moving = false;
@@ -168,15 +149,17 @@ void Game::Update(float delta_time_seconds) {
   }
 
   {
-    RenderMesh(table_, shaders["VertexColor"], glm::mat4(1));
+    RenderSimpleMesh(table_, shaders["PoolShader"], kTableModelMatrix, 0,
+                     kTableColor);
+    RenderSimpleMesh(table_metal_, shaders["PoolShader"], kTableModelMatrix, 0,
+                     kTableMetalColor);
+    RenderSimpleMesh(table_bed_, shaders["PoolShader"], kTableModelMatrix, 0,
+                     kTableBedColor);
+
     for (auto ball : balls_) {
       ball->Update(delta_time_seconds);
       RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"],
                        ball->GetModelMatrix(), 0, ball->GetColor());
-    }
-    for (auto pocket : pockets_) {
-      RenderSimpleMesh((Mesh *)pocket, shaders["PoolShader"],
-                       pocket->GetModelMatrix(), 0, pocket->GetColor());
     }
 
     if (GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson)
@@ -276,17 +259,13 @@ void Game::OnInputUpdate(float delta_time, int mods) {
       Ball *cue_ball = balls_[kCueBallIndex];
       glm::vec3 pos = cue_ball->GetCenter();
 
-      if (window->KeyHold(GLFW_KEY_W) &&
-          pos.z > kTableLength / 6 + kTableThickness + kBallRadius)
+      if (window->KeyHold(GLFW_KEY_W) && pos.z > kTableLength / 6 + kBallRadius)
         cue_ball->MoveUp(delta_time);
-      if (window->KeyHold(GLFW_KEY_A) &&
-          pos.x > -kTableWidth / 2 + kTableThickness + kBallRadius)
+      if (window->KeyHold(GLFW_KEY_A) && pos.x > -kTableWidth / 2 + kBallRadius)
         cue_ball->MoveLeft(delta_time);
-      if (window->KeyHold(GLFW_KEY_S) &&
-          pos.z < kTableLength / 2 - kTableThickness - kBallRadius)
+      if (window->KeyHold(GLFW_KEY_S) && pos.z < kTableLength / 2 - kBallRadius)
         cue_ball->MoveDown(delta_time);
-      if (window->KeyHold(GLFW_KEY_D) &&
-          pos.x < kTableWidth / 2 - kTableThickness - kBallRadius)
+      if (window->KeyHold(GLFW_KEY_D) && pos.x < kTableWidth / 2 - kBallRadius)
         cue_ball->MoveRight(delta_time);
     }
   }
@@ -340,7 +319,7 @@ void Game::OnWindowResize(int width, int height) {}
 void Game::TopDownView() {
   if (GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson) {
     GetSceneCamera()->type = EngineComponents::CameraType::FirstPerson;
-    GetSceneCamera()->SetPosition(glm::vec3(0, 4, 0));
+    GetSceneCamera()->SetPosition(glm::vec3(0, 4.25, 0));
     GetSceneCamera()->RotateOX(-750);
     GetSceneCamera()->Update();
   }

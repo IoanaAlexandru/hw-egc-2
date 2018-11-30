@@ -6,7 +6,6 @@
 #include <Core/GPU/Mesh.h>
 #include "pool/objects/ball.h"
 #include "pool/objects/cue.h"
-#include "pool/objects/table.h"
 
 namespace pool {
 class Game : public SimpleScene {
@@ -40,13 +39,13 @@ class Game : public SimpleScene {
   void TopDownView();
   void ThirdPersonView();
 
-  static const float kTableWidth, kTableHeight, kTableLength, kTableThickness,
-      kBallRadius, kPocketRadius, kCueLength;
-  static const glm::vec3 kTableSlateColor, kTableRailColor, kCueColor,
-      kPlayerOneColor, kPlayerTwoColor;
+  static const float kTableWidth, kTableLength, kBallRadius, kCueLength;
+  static const glm::vec3 kTableBedColor, kTableColor, kTableMetalColor,
+      kCueColor, kPlayerOneColor, kPlayerTwoColor;
   static const float kMovementSpeed, kCueBallViewDistance, kCueBallViewHeight,
       kMaxCueOffset;
   static const int kBlackBallIndex = 5, kCueBallIndex = 0;
+  static const glm::mat4 kTableModelMatrix;
 
   glm::vec3 light_position_;
   unsigned int ball_shininess_;
@@ -55,9 +54,8 @@ class Game : public SimpleScene {
   float cue_offset_;
   float cue_movement_speed_;
 
-  Table *table_;
+  Mesh *table_, *table_bed_, *table_metal_;
   Cue *cue_;
-  std::vector<Ball *> pockets_;
   std::vector<Ball *> balls_;
 
   bool place_cue_ball_ = true;
