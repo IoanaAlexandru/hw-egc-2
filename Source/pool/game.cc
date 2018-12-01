@@ -35,6 +35,7 @@ void Game::Init() {
     PlaceCueBall();
   }
 
+  // Table
   {
     table_ = new Mesh("table");
     table_->LoadMesh(RESOURCE_PATH::MODELS + "Props", "table.obj");
@@ -44,7 +45,10 @@ void Game::Init() {
 
     table_metal_ = new Mesh("table_metal");
     table_metal_->LoadMesh(RESOURCE_PATH::MODELS + "Props", "table_metal.obj");
+  }
 
+  // Pockets
+  {
     glm::vec3 pure_black = glm::vec3(0, 0, 0);
     glm::vec3 corner = glm::vec3(-kTableWidth / 2 - kPocketRadius, 0, 0);
     pockets_.push_back(
@@ -66,6 +70,7 @@ void Game::Init() {
         kPocketRadius, pure_black));
   }
 
+  // Balls
   {
     glm::vec3 ball_center = glm::vec3(0, kBallRadius, kTableLength / 4);
     glm::vec3 ball_color = glm::vec3(0.9, 0.9, 0.9);
@@ -103,8 +108,7 @@ void Game::Init() {
     meshes[mesh->GetMeshID()] = mesh;
   }
 
-  // Create a shader program for drawing face polygon with the color of the
-  // normal
+  // Shader
   {
     Shader *shader = new Shader("PoolShader");
     shader->AddShader("Source/pool/shaders/VertexShader.glsl",
@@ -139,7 +143,7 @@ void Game::Init() {
     velvet_properties_.kd = 1.2f;
     velvet_properties_.ks = 1.5f;
   }
-}  // namespace pool
+}
 
 void Game::FrameStart() {
   // clears the color buffer (using the previously set color) and depth buffer
@@ -147,7 +151,7 @@ void Game::FrameStart() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glm::ivec2 resolution = window->GetResolution();
-  // sets the screen area where to draw
+  // Sets the screen area where to draw
   glViewport(0, 0, resolution.x, resolution.y);
 }
 
@@ -157,12 +161,14 @@ void Game::Update(float delta_time_seconds) {
     for (auto ball : balls_) {
       glm::vec3 center = ball->GetCenter();
 
+      // Pockets
       for (auto pocket : pockets_) {
         if (Ball::CheckCollision(ball, pocket, delta_time_seconds))
           ball->SetPotted(true);
       }
       if (ball->IsPotted()) continue;
 
+      // Rails
       if (center.z + kBallRadius > kTableLength / 2 ||
           center.z - kBallRadius < -kTableLength / 2) {
         ball->ReflectZ();
@@ -175,6 +181,7 @@ void Game::Update(float delta_time_seconds) {
           ball->ReflectX();
       }
 
+      // Balls
       if (ball->IsMoving()) {
         for (auto another_ball : balls_) {
           if (another_ball == ball) continue;
@@ -185,14 +192,19 @@ void Game::Update(float delta_time_seconds) {
         }
       }
     }
+  }
 
+  // Check status of special balls
+  {
     if (balls_[kCueBallIndex]->IsPotted()) {
       balls_[kCueBallIndex]->Reset();
       PlaceCueBall();
     }
   }
 
+  // Render objects
   {
+    // Table
     RenderSimpleMesh(table_, shaders["PoolShader"], kTableModelMatrix, 0,
                      table_properties_, kTableColor);
     RenderSimpleMesh(table_metal_, shaders["PoolShader"], kTableModelMatrix, 0,
@@ -200,6 +212,7 @@ void Game::Update(float delta_time_seconds) {
     RenderSimpleMesh(table_bed_, shaders["PoolShader"], kTableModelMatrix, 0,
                      velvet_properties_, kTableBedColor);
 
+    // Balls
     for (auto ball : balls_) {
       ball->Update(delta_time_seconds);
       RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"],
@@ -207,18 +220,16 @@ void Game::Update(float delta_time_seconds) {
                        ball->GetColor());
     }
 
+    // Cue
     if (stage_ == GameStage::HitCueBall)
       RenderSimpleMesh((Mesh *)cue_, shaders["PoolShader"],
                        cue_->GetModelMatrix(), cue_offset_, cue_properties_,
                        cue_->GetColor());
-  }
 
-  // Render the point light in the scene
-  {
-    glm::mat4 modelMatrix = glm::mat4(1);
-    modelMatrix = glm::translate(modelMatrix, light_position_);
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.001f));
-    RenderMesh(meshes["sphere"], shaders["Simple"], modelMatrix);
+    // Light point
+    RenderMesh(meshes["sphere"], shaders["Simple"],
+               glm::scale(glm::translate(glm::mat4(1), light_position_),
+                          glm::vec3(0.001f)));
   }
 }
 
@@ -232,55 +243,58 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
                             const glm::vec3 &color) {
   if (!mesh || !shader || !shader->GetProgramID()) return;
 
-  // render an object using the specified shader and the specified position
+  // Render an object using the specified shader and the specified position
   glUseProgram(shader->program);
 
   // Set shader uniforms for light & material properties
-  GLint light = glGetUniformLocation(shader->program, "light_position");
-  glUniform3fv(light, 1, glm::value_ptr(light_position_));
+  GLint light_loc = glGetUniformLocation(shader->program, "light_position");
+  glUniform3fv(light_loc, 1, glm::value_ptr(light_position_));
 
-  GLint shininess = glGetUniformLocation(shader->program, "material_shininess");
+  GLint shininess_loc =
+      glGetUniformLocation(shader->program, "material_shininess");
+  glUniform1ui(shininess_loc, properties.shininess);
 
-  GLint eye = glGetUniformLocation(shader->program, "eye_position");
-  glm::vec3 eyePosition = glm::vec3(0, 0, 0);
-  glUniform3fv(eye, 1, glm::value_ptr(eyePosition));
+  GLint eye_position_loc =
+      glGetUniformLocation(shader->program, "eye_position");
+  glm::vec3 eye_position = glm::vec3(0, 0, 0);
+  glUniform3fv(eye_position_loc, 1, glm::value_ptr(eye_position));
 
-  glUniform1ui(shininess, properties.shininess);
+  GLint kd_loc = glGetUniformLocation(shader->program, "material_kd");
+  glUniform1f(kd_loc, properties.kd);
 
-  GLint kd = glGetUniformLocation(shader->program, "material_kd");
-  glUniform1f(kd, properties.kd);
+  GLint ks_loc = glGetUniformLocation(shader->program, "material_ks");
+  glUniform1f(ks_loc, properties.ks);
 
-  GLint ks = glGetUniformLocation(shader->program, "material_ks");
-  glUniform1f(ks, properties.ks);
+  GLint color_loc = glGetUniformLocation(shader->program, "object_color");
+  glUniform3fv(color_loc, 1, glm::value_ptr(color));
 
-  GLint colorP = glGetUniformLocation(shader->program, "object_color");
-  glUniform3fv(colorP, 1, glm::value_ptr(color));
-
-  GLint offset = glGetUniformLocation(shader->program, "z_offset");
-  glUniform1f(offset, z_offset);
+  GLint z_offset_loc = glGetUniformLocation(shader->program, "z_offset");
+  glUniform1f(z_offset_loc, z_offset);
 
   // Bind model matrix
-  GLint loc_model_matrix = glGetUniformLocation(shader->program, "Model");
-  glUniformMatrix4fv(loc_model_matrix, 1, GL_FALSE,
+  GLint model_matrix_loc = glGetUniformLocation(shader->program, "Model");
+  glUniformMatrix4fv(model_matrix_loc, 1, GL_FALSE,
                      glm::value_ptr(model_matrix));
 
   // Bind view matrix
-  glm::mat4 viewMatrix = camera_->GetViewMatrix();
-  int loc_view_matrix = glGetUniformLocation(shader->program, "View");
-  glUniformMatrix4fv(loc_view_matrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+  glm::mat4 view_matrix = camera_->GetViewMatrix();
+  int view_matrix_loc = glGetUniformLocation(shader->program, "View");
+  glUniformMatrix4fv(view_matrix_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
 
   // Bind projection matrix
-  glm::mat4 projectionMatrix = camera_->GetProjectionMatrix();
+  glm::mat4 projection_matrix = camera_->GetProjectionMatrix();
   int loc_projection_matrix =
       glGetUniformLocation(shader->program, "Projection");
   glUniformMatrix4fv(loc_projection_matrix, 1, GL_FALSE,
-                     glm::value_ptr(projectionMatrix));
+                     glm::value_ptr(projection_matrix));
 
   // Draw the object
   glBindVertexArray(mesh->GetBuffers()->VAO);
   glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()),
                  GL_UNSIGNED_SHORT, 0);
 }
+
+#pragma region INPUT UPDATE
 
 void Game::OnInputUpdate(float delta_time, int mods) {
   if (!window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
@@ -339,9 +353,7 @@ void Game::OnKeyPress(int key, int mods) {
     HitCueBall();
 }
 
-void Game::OnKeyRelease(int key, int mods) {
-  // add key release event
-}
+void Game::OnKeyRelease(int key, int mods) {}
 
 void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
   if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT) &&
@@ -351,9 +363,7 @@ void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
   }
 }
 
-void Game::OnMouseBtnPress(int mouse_x, int mouse_y, int button, int mods) {
-  // add mouse button press event
-}
+void Game::OnMouseBtnPress(int mouse_x, int mouse_y, int button, int mods) {}
 
 void Game::OnMouseBtnRelease(int mouse_x, int mouse_y, int button, int mods) {
   if (button == 1 &&  // GLFW_MOUSE_BUTTON_LEFT not working?
@@ -367,6 +377,10 @@ void Game::OnMouseScroll(int mouse_x, int mouse_y, int offset_x, int offset_y) {
 }
 
 void Game::OnWindowResize(int width, int height) {}
+
+#pragma endregion
+
+#pragma region GAME STAGES
 
 void Game::ViewShot() {
   stage_ = GameStage::ViewShot;
@@ -385,7 +399,6 @@ void Game::HitCueBall() {
   camera_->ThirdPerson(ball_center, default_target);
 
   cue_ = new Cue("cue", ball_center, kCueLength, kCueColor);
-
   if (ball_center.x > 0)
     cue_->Rotate((float)(-camera_->GetOxAngle() + M_PI));
   else
@@ -393,4 +406,6 @@ void Game::HitCueBall() {
   cue_offset_ = 0;
   cue_movement_speed_ = kMovementSpeed;
 }
+
+#pragma endregion
 }  // namespace pool
