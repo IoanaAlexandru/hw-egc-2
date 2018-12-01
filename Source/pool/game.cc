@@ -162,7 +162,7 @@ void Game::Update(float delta_time_seconds) {
         glm::vec3 center = ball->GetCenter();
 
         for (auto pocket : pockets_) {
-          if (Ball::CheckCollision(ball, pocket)) ball->SetPotted(true);
+          if (Ball::CheckCollision(ball, pocket, delta_time_seconds)) ball->SetPotted(true);
         }
         if (ball->IsPotted()) continue;
 
@@ -180,7 +180,7 @@ void Game::Update(float delta_time_seconds) {
 
           for (auto another_ball : balls_) {
             if (another_ball == ball) continue;
-            if (Ball::CheckCollision(ball, another_ball)) {
+            if (Ball::CheckCollision(ball, another_ball, delta_time_seconds)) {
               Ball::Bounce(ball, another_ball);
               break;
             }

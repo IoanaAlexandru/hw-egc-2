@@ -20,9 +20,7 @@ class Ball : public Mesh {
 
   inline bool IsMoving() { return movement_vector_ != glm::vec3(0, 0, 0); }
   inline bool IsPotted() { return potted_; }
-  inline float GetSpeed() {
-    return sqrt(pow(movement_vector_.x, 2) + pow(movement_vector_.z, 2));
-  }
+  inline float GetSpeed() { return glm::length(movement_vector_); }
 
   inline void SetMoveVec(glm::vec3 movement_vector) {
     movement_vector_ = movement_vector;
@@ -41,13 +39,15 @@ class Ball : public Mesh {
   void ReflectZ();
 
   static bool AreTouching(Ball* ball1, Ball* ball2);
-  static bool CheckCollision(Ball* ball1, Ball* ball2);
+  static bool CheckCollision(Ball* ball1, Ball* ball2, float delta_time);
   static void Bounce(Ball* ball1, Ball* ball2);
 
  private:
   void UpdateModelMatrix();
-  static bool DynamicStaticCollision(Ball* ball1, Ball* ball2);
-  static bool DynamicDynamicCollision(Ball* ball1, Ball* ball2);
+  static bool DynamicStaticCollision(Ball* ball1, Ball* ball2,
+                                     float delta_time);
+  static bool DynamicDynamicCollision(Ball* ball1, Ball* ball2,
+                                      float delta_time);
 
   float kDefaultRadius = 0.5f, kDefaultSpeed = 1.8f, kMass = 1.0f;
 

@@ -62,10 +62,8 @@ void Ball::ReflectX() { movement_vector_.x *= -1; }
 void Ball::ReflectZ() { movement_vector_.z *= -1; }
 
 bool Ball::AreTouching(Ball *ball1, Ball *ball2) {
-  float centers_distance =
-      sqrt(pow(ball1->GetCenter().x - ball2->GetCenter().x, 2) +
-           pow(ball1->GetCenter().z - ball2->GetCenter().z, 2));
-  return centers_distance <= ball1->GetRadius() + ball2->GetRadius();
+  return glm::distance(ball1->GetCenter(), ball2->GetCenter()) <=
+         ball1->GetRadius() + ball2->GetRadius();
 }
 
 /*
@@ -73,13 +71,13 @@ Collision detection between a moving ball and a stationary one as per the
 algorithm at
 http://www.gamasutra.com/view/feature/131424/pool_hall_lessons_fast_accurate_.php?page=2
 */
-bool Ball::DynamicStaticCollision(Ball *ball1, Ball *ball2) {
+bool Ball::DynamicStaticCollision(Ball *ball1, Ball *ball2, float delta_time) {
   glm::vec3 v = ball1->GetMoveVec();
   glm::vec3 c1 = ball1->GetCenter();
   glm::vec3 c2 = ball2->GetCenter();
   float r1 = ball1->GetRadius();
   float r2 = ball2->GetRadius();
-  float speed = ball1->GetSpeed();
+  float speed = ball1->GetSpeed() * delta_time;
 
   // If the length of the movement vector is less than the distance between the
   // centers of the balls minus their radii, they can't hit
@@ -101,7 +99,7 @@ bool Ball::DynamicStaticCollision(Ball *ball1, Ball *ball2) {
 
   // If the closest that ball1 will get to ball2 is more than the sum of their
   // radii, they can't hit
-  float t = sum_radii * sum_radii - c_len * c_len - d * d;
+  float t = sum_radii * sum_radii - c_len * c_len + d * d;
   if (0 >= t) return false;
 
   // Compute the distance the ball has to travel along the movement vector
@@ -113,13 +111,13 @@ bool Ball::DynamicStaticCollision(Ball *ball1, Ball *ball2) {
   return true;
 }
 
-bool Ball::DynamicDynamicCollision(Ball *ball1, Ball *ball2) {
+bool Ball::DynamicDynamicCollision(Ball *ball1, Ball *ball2, float delta_time) {
   glm::vec3 v1 = ball1->GetMoveVec();
   glm::vec3 v2 = ball2->GetMoveVec();
 
   // We consider ball2 to be stationary
   ball1->SetMoveVec(v1 - v2);
-  bool colliding = DynamicStaticCollision(ball1, ball2);
+  bool colliding = DynamicStaticCollision(ball1, ball2, delta_time);
 
   // Reverting movement vector
   ball1->SetMoveVec(v1);
@@ -129,10 +127,9 @@ bool Ball::DynamicDynamicCollision(Ball *ball1, Ball *ball2) {
 /*
 Check if moving ball1 collides with ball2.
 */
-bool Ball::CheckCollision(Ball *ball1, Ball *ball2) {
-  if (ball2->IsMoving())
-    return DynamicDynamicCollision(ball1, ball2);
-  return DynamicStaticCollision(ball1, ball2);
+bool Ball::CheckCollision(Ball *ball1, Ball *ball2, float delta_time) {
+  if (ball2->IsMoving()) return DynamicDynamicCollision(ball1, ball2, delta_time);
+  return DynamicStaticCollision(ball1, ball2, delta_time);
 }
 
 /*
