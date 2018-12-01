@@ -57,6 +57,7 @@
     <ClInclude Include="..\Source\include\glm.h" />
     <ClInclude Include="..\Source\include\math.h" />
     <ClInclude Include="..\Source\include\utils.h" />
+    <ClInclude Include="..\Source\pool\camera.h" />
     <ClInclude Include="..\Source\pool\game.h" />
     <ClInclude Include="..\Source\pool\objects\ball.h" />
     <ClInclude Include="..\Source\pool\objects\cue.h" />

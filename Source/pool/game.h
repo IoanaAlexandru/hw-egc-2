@@ -4,6 +4,8 @@
 #include <Component/SimpleScene.h>
 #include <Component/Transform/Transform.h>
 #include <Core/GPU/Mesh.h>
+
+#include "pool/camera.h"
 #include "pool/objects/ball.h"
 #include "pool/objects/cue.h"
 
@@ -12,6 +14,10 @@ typedef struct {
   int shininess;
   float kd, ks;
 } MaterialProperties;
+
+enum class GameStage {
+  PlaceCueBall, HitCueBall, ViewShot
+};
 
 class Game : public SimpleScene {
  public:
@@ -41,18 +47,19 @@ class Game : public SimpleScene {
                      int offset_y) override;
   void OnWindowResize(int width, int height) override;
 
-  glm::vec2 GetViewPoint(glm::vec2 target_pos, glm::vec2 ball_pos);
-  void TopDownView();
-  void ThirdPersonView();
+  void ViewShot();
+  void PlaceCueBall();
+  void HitCueBall();
 
   static const float kTableWidth, kTableLength, kBallRadius, kCueLength,
       kPocketRadius, kTableBedBorder;
   static const glm::vec3 kTableBedColor, kTableColor, kTableMetalColor,
       kCueColor, kPlayerOneColor, kPlayerTwoColor;
-  static const float kMovementSpeed, kCueBallViewDistance, kCueBallViewHeight,
-      kMaxCueOffset;
+  static const float kMovementSpeed, kMaxCueOffset;
   static const int kBlackBallIndex = 5, kCueBallIndex = 0;
   static const glm::mat4 kTableModelMatrix;
+
+  Camera *camera_;
 
   glm::vec3 light_position_;
   MaterialProperties ball_properties_, cue_properties_, metal_properties_,
@@ -65,7 +72,7 @@ class Game : public SimpleScene {
   std::vector<Ball *> balls_;
   std::vector<Ball *> pockets_;
 
-  bool place_cue_ball_ = true;
+  GameStage stage_;
 };
 }  // namespace pool
 

@@ -147,6 +147,9 @@
     <ClInclude Include="..\Source\pool\objects\cue.h">
       <Filter>pool\objects</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\pool\camera.h">
+      <Filter>pool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />

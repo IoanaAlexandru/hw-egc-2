@@ -20,8 +20,7 @@ const glm::vec3 Game::kTableBedColor = glm::vec3(0, 0.5, 0.1),
                 Game::kCueColor = glm::vec3(0.5, 0.15, 0.15),
                 Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
                 Game::kPlayerTwoColor = glm::vec3(0.96, 0.76, 0.05);
-const float Game::kMovementSpeed = 2.0f, Game::kCueBallViewDistance = 0.8f,
-            Game::kCueBallViewHeight = 0.3f, Game::kMaxCueOffset = 2.0f;
+const float Game::kMovementSpeed = 2.0f, Game::kMaxCueOffset = 2.0f;
 const glm::mat4 Game::kTableModelMatrix =
     glm::scale(glm::mat4(1), glm::vec3(2.0f));
 
@@ -31,8 +30,8 @@ Game::~Game() {}
 
 void Game::Init() {
   {
-    GetSceneCamera()->type = EngineComponents::CameraType::ThirdPerson;
-    TopDownView();
+    camera_ = new Camera(window->props.aspectRatio);
+    PlaceCueBall();
   }
 
   {
@@ -58,14 +57,12 @@ void Game::Init() {
     corner = glm::vec3(kTableWidth / 2 + kPocketRadius, 0, 0);
     pockets_.push_back(
         new Ball("middle_right", corner, kPocketRadius, pure_black));
-    pockets_.push_back(
-        new Ball("upper_right",
-                 corner + glm::vec3(-kPocketRadius, 0, kTableLength / 2),
-                 kPocketRadius, pure_black));
-    pockets_.push_back(
-        new Ball("lower_right",
-                 corner + glm::vec3(-kPocketRadius, 0, -kTableLength / 2),
-                 kPocketRadius, pure_black));
+    pockets_.push_back(new Ball(
+        "upper_right", corner + glm::vec3(-kPocketRadius, 0, kTableLength / 2),
+        kPocketRadius, pure_black));
+    pockets_.push_back(new Ball(
+        "lower_right", corner + glm::vec3(-kPocketRadius, 0, -kTableLength / 2),
+        kPocketRadius, pure_black));
   }
 
   {
@@ -156,13 +153,14 @@ void Game::FrameStart() {
 void Game::Update(float delta_time_seconds) {
   // Collisions
   {
-    if (GetSceneCamera()->type == EngineComponents::CameraType::FirstPerson) {
+    if (stage_ == GameStage::ViewShot) {
       bool none_moving = true;
       for (auto ball : balls_) {
         glm::vec3 center = ball->GetCenter();
 
         for (auto pocket : pockets_) {
-          if (Ball::CheckCollision(ball, pocket, delta_time_seconds)) ball->SetPotted(true);
+          if (Ball::CheckCollision(ball, pocket, delta_time_seconds))
+            ball->SetPotted(true);
         }
         if (ball->IsPotted()) continue;
 
@@ -188,8 +186,7 @@ void Game::Update(float delta_time_seconds) {
         }
       }
 
-      if (none_moving && !place_cue_ball_)
-        ThirdPersonView();  // start next shot
+      if (none_moving) HitCueBall();  // start next shot
     }
   }
 
@@ -204,12 +201,14 @@ void Game::Update(float delta_time_seconds) {
     for (auto ball : balls_) {
       ball->Update(delta_time_seconds);
       RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"],
-                       ball->GetModelMatrix(), 0, ball_properties_, ball->GetColor());
+                       ball->GetModelMatrix(), 0, ball_properties_,
+                       ball->GetColor());
     }
 
-    if (GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson)
+    if (stage_ == GameStage::HitCueBall)
       RenderSimpleMesh((Mesh *)cue_, shaders["PoolShader"],
-                       cue_->GetModelMatrix(), cue_offset_, cue_properties_, cue_->GetColor());
+                       cue_->GetModelMatrix(), cue_offset_, cue_properties_,
+                       cue_->GetColor());
   }
 
   // Render the point light in the scene
@@ -221,7 +220,9 @@ void Game::Update(float delta_time_seconds) {
   }
 }
 
-void Game::FrameEnd() { DrawCoordinatSystem(); }
+void Game::FrameEnd() {
+  DrawCoordinatSystem(camera_->GetViewMatrix(), camera_->GetProjectionMatrix());
+}
 
 void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
                             const glm::mat4 &model_matrix, float z_offset,
@@ -239,7 +240,7 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
   GLint shininess = glGetUniformLocation(shader->program, "material_shininess");
 
   GLint eye = glGetUniformLocation(shader->program, "eye_position");
-  glm::vec3 eyePosition = GetSceneCamera()->transform->GetWorldPosition();
+  glm::vec3 eyePosition = glm::vec3(0, 0, 0);
   glUniform3fv(eye, 1, glm::value_ptr(eyePosition));
 
   glUniform1ui(shininess, properties.shininess);
@@ -262,12 +263,12 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
                      glm::value_ptr(model_matrix));
 
   // Bind view matrix
-  glm::mat4 viewMatrix = GetSceneCamera()->GetViewMatrix();
+  glm::mat4 viewMatrix = camera_->GetViewMatrix();
   int loc_view_matrix = glGetUniformLocation(shader->program, "View");
   glUniformMatrix4fv(loc_view_matrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
   // Bind projection matrix
-  glm::mat4 projectionMatrix = GetSceneCamera()->GetProjectionMatrix();
+  glm::mat4 projectionMatrix = camera_->GetProjectionMatrix();
   int loc_projection_matrix =
       glGetUniformLocation(shader->program, "Projection");
   glUniformMatrix4fv(loc_projection_matrix, 1, GL_FALSE,
@@ -283,9 +284,8 @@ void Game::OnInputUpdate(float delta_time, int mods) {
   if (!window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
     if (mods == GLFW_MOD_CONTROL) {
       glm::vec3 up = glm::vec3(0, 1, 0);
-      glm::vec3 right = GetSceneCamera()->transform->GetLocalOXVector();
-      glm::vec3 forward = GetSceneCamera()->transform->GetLocalOZVector();
-      forward = glm::normalize(glm::vec3(forward.x, 0, forward.z));
+      glm::vec3 right = glm::vec3(1, 0, 0);
+      glm::vec3 forward = glm::vec3(0, 0, 1);
 
       // Control light position using on W, A, S, D, E, Q
       if (window->KeyHold(GLFW_KEY_W))
@@ -300,7 +300,7 @@ void Game::OnInputUpdate(float delta_time, int mods) {
         light_position_ += up * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_Q))
         light_position_ -= up * delta_time * kMovementSpeed;
-    } else if (place_cue_ball_) {
+    } else if (stage_ == GameStage::PlaceCueBall) {
       Ball *cue_ball = balls_[kCueBallIndex];
       glm::vec3 pos = cue_ball->GetCenter();
 
@@ -313,6 +313,13 @@ void Game::OnInputUpdate(float delta_time, int mods) {
       if (window->KeyHold(GLFW_KEY_D) && pos.x < kTableWidth / 2 - kBallRadius)
         cue_ball->MoveRight(delta_time);
     }
+  } else {
+    if (window->KeyHold(GLFW_KEY_W)) camera_->TranslateForward(delta_time);
+    if (window->KeyHold(GLFW_KEY_A)) camera_->TranslateRight(-delta_time);
+    if (window->KeyHold(GLFW_KEY_S)) camera_->TranslateForward(-delta_time);
+    if (window->KeyHold(GLFW_KEY_D)) camera_->TranslateRight(delta_time);
+    if (window->KeyHold(GLFW_KEY_Q)) camera_->TranslateUpword(-delta_time);
+    if (window->KeyHold(GLFW_KEY_E)) camera_->TranslateUpword(delta_time);
   }
 
   if (window->MouseHold(GLFW_MOUSE_BUTTON_LEFT)) {
@@ -323,7 +330,9 @@ void Game::OnInputUpdate(float delta_time, int mods) {
 }
 
 void Game::OnKeyPress(int key, int mods) {
-  if (key == GLFW_KEY_SPACE) place_cue_ball_ = false;
+  if (key == GLFW_KEY_SPACE &&
+      (stage_ == GameStage::ViewShot || stage_ == GameStage::PlaceCueBall))
+    HitCueBall();
 }
 
 void Game::OnKeyRelease(int key, int mods) {
@@ -332,12 +341,9 @@ void Game::OnKeyRelease(int key, int mods) {
 
 void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
   if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT) &&
-      GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson) {
-    GetSceneCamera()->MoveForward(kCueBallViewDistance);
-    GetSceneCamera()->RotateOY((float)-delta_x);
-    GetSceneCamera()->RotateOX((float)-delta_y);
-    GetSceneCamera()->MoveForward(-kCueBallViewDistance);
-    GetSceneCamera()->Update();
+      stage_ == GameStage::HitCueBall) {
+    camera_->RotateOy((float)-delta_x * 0.001f);
+    camera_->RotateOx((float)-delta_y * 0.001f);
 
     cue_->Rotate((float)-delta_x);
   }
@@ -349,10 +355,9 @@ void Game::OnMouseBtnPress(int mouse_x, int mouse_y, int button, int mods) {
 
 void Game::OnMouseBtnRelease(int mouse_x, int mouse_y, int button, int mods) {
   if (button == 1 &&  // GLFW_MOUSE_BUTTON_LEFT not working?
-      cue_offset_ >= 0 &&
-      GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson) {
+      cue_offset_ >= 0 && stage_ == GameStage::HitCueBall) {
     balls_[kCueBallIndex]->CueHit(cue_->GetDirection(), -cue_offset_);
-    TopDownView();
+    ViewShot();
   }
 }
 
@@ -361,40 +366,25 @@ void Game::OnMouseScroll(int mouse_x, int mouse_y, int offset_x, int offset_y) {
 
 void Game::OnWindowResize(int width, int height) {}
 
-void Game::TopDownView() {
-  if (GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson) {
-    GetSceneCamera()->type = EngineComponents::CameraType::FirstPerson;
-    GetSceneCamera()->SetPosition(glm::vec3(0, 4.25, 0));
-    GetSceneCamera()->RotateOX(-750);
-    GetSceneCamera()->Update();
-  }
+void Game::ViewShot() {
+  stage_ = GameStage::ViewShot;
+  camera_->TopDown();
 }
 
-glm::vec2 Game::GetViewPoint(glm::vec2 target_pos, glm::vec2 ball_pos) {
-  glm::vec2 v = glm::normalize(target_pos - ball_pos);
-  return ball_pos - kCueBallViewDistance * v;
+void Game::PlaceCueBall() {
+  stage_ = GameStage::PlaceCueBall;
+  camera_->TopDown();
 }
 
-void Game::ThirdPersonView() {
-  if (GetSceneCamera()->type == EngineComponents::CameraType::FirstPerson) {
-    glm::vec2 default_target = glm::vec2(0, 0);  // look at center of table
-    glm::vec3 ball_center = balls_[kCueBallIndex]->GetCenter();
-    glm::vec2 view_point =
-        GetViewPoint(default_target, glm::vec2(ball_center.x, ball_center.z));
+void Game::HitCueBall() {
+  stage_ = GameStage::HitCueBall;
+  glm::vec3 default_target = glm::vec3(0);
+  glm::vec3 ball_center = balls_[kCueBallIndex]->GetCenter();
+  camera_->ThirdPerson(ball_center, default_target);
 
-    GetSceneCamera()->type = EngineComponents::CameraType::ThirdPerson;
-    GetSceneCamera()->RotateOX(750);
-    GetSceneCamera()->SetPosition(
-        glm::vec3(view_point.x, kCueBallViewHeight, view_point.y));
-    GetSceneCamera()->RotateOY((view_point.x - default_target.x) * 360);
-    GetSceneCamera()->Update();
-
-    place_cue_ball_ = false;
-
-    cue_ = new Cue("cue", ball_center, kCueLength, kCueColor);
-    cue_->Rotate((view_point.x - ball_center.x) * 360);
-    cue_offset_ = 0;
-    cue_movement_speed_ = kMovementSpeed;
-  }
+  cue_ = new Cue("cue", ball_center, kCueLength, kCueColor);
+  // cue_->Rotate((view_point.x - ball_center.x) * 360);  // TODO
+  cue_offset_ = 0;
+  cue_movement_speed_ = kMovementSpeed;
 }
 }  // namespace pool
