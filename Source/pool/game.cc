@@ -16,7 +16,7 @@ const float Game::kTableWidth = 2.16f, Game::kTableLength = 4.26f,
             Game::kPocketRadius = 0.12f, Game::kTableBedBorder = 0.08f;
 const glm::vec3 Game::kTableBedColor = glm::vec3(0, 0.5, 0.1),
                 Game::kTableColor = glm::vec3(0.3, 0.05, 0.05),
-                Game::kTableMetalColor = glm::vec3(0.8, 0.8, 0.8),
+                Game::kMetalColor = glm::vec3(0.8, 0.8, 0.8),
                 Game::kCueColor = glm::vec3(0.5, 0.15, 0.15),
                 Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
                 Game::kPlayerTwoColor = glm::vec3(0.96, 0.76, 0.05);
@@ -31,6 +31,7 @@ Game::~Game() {}
 
 void Game::Init() {
   {
+    render_lamp_ = true;
     camera_ = new Camera(window->props.aspectRatio);
     PlaceCueBall();
   }
@@ -103,9 +104,8 @@ void Game::Init() {
   }
 
   {
-    Mesh *mesh = new Mesh("sphere");
-    mesh->LoadMesh(RESOURCE_PATH::MODELS + "Primitives", "sphere.obj");
-    meshes[mesh->GetMeshID()] = mesh;
+    lamp_ = new Mesh("lamp");
+    lamp_->LoadMesh(RESOURCE_PATH::MODELS + "Props", "lamp.obj");
   }
 
   // Shader
@@ -208,7 +208,7 @@ void Game::Update(float delta_time_seconds) {
     RenderSimpleMesh(table_, shaders["PoolShader"], kTableModelMatrix, 0,
                      table_properties_, kTableColor);
     RenderSimpleMesh(table_metal_, shaders["PoolShader"], kTableModelMatrix, 0,
-                     metal_properties_, kTableMetalColor);
+                     metal_properties_, kMetalColor);
     RenderSimpleMesh(table_bed_, shaders["PoolShader"], kTableModelMatrix, 0,
                      velvet_properties_, kTableBedColor);
 
@@ -227,9 +227,10 @@ void Game::Update(float delta_time_seconds) {
                        cue_->GetColor());
 
     // Light point
-    RenderMesh(meshes["sphere"], shaders["Simple"],
-               glm::scale(glm::translate(glm::mat4(1), light_position_),
-                          glm::vec3(0.001f)));
+    if (render_lamp_)
+      RenderSimpleMesh(lamp_, shaders["PoolShader"],
+                       glm::translate(glm::mat4(1), light_position_), 0,
+                       metal_properties_, kMetalColor);
   }
 }
 
@@ -351,6 +352,7 @@ void Game::OnKeyPress(int key, int mods) {
       (stage_ == GameStage::ViewShot || stage_ == GameStage::PlaceCueBall) &&
       !balls_[kCueBallIndex]->IsMoving())
     HitCueBall();
+  if (key == GLFW_KEY_L) render_lamp_ = !render_lamp_;
 }
 
 void Game::OnKeyRelease(int key, int mods) {}

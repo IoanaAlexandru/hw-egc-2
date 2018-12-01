@@ -53,7 +53,7 @@ class Game : public SimpleScene {
 
   static const float kTableWidth, kTableLength, kBallRadius, kCueLength,
       kPocketRadius, kTableBedBorder;
-  static const glm::vec3 kTableBedColor, kTableColor, kTableMetalColor,
+  static const glm::vec3 kTableBedColor, kTableColor, kMetalColor,
       kCueColor, kPlayerOneColor, kPlayerTwoColor;
   static const float kMovementSpeed, kMaxCueOffset, kSensitivity;
   static const int kBlackBallIndex = 5, kCueBallIndex = 0;
@@ -64,10 +64,10 @@ class Game : public SimpleScene {
   glm::vec3 light_position_;
   MaterialProperties ball_properties_, cue_properties_, metal_properties_,
       table_properties_, velvet_properties_;
-  float cue_offset_;
-  float cue_movement_speed_;
+  float cue_offset_, cue_movement_speed_;
+  bool render_lamp_;
 
-  Mesh *table_, *table_bed_, *table_metal_;
+  Mesh *table_, *table_bed_, *table_metal_, *lamp_;
   Cue *cue_;
   std::vector<Ball *> balls_;
   std::vector<Ball *> pockets_;
