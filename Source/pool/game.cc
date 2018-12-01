@@ -154,40 +154,36 @@ void Game::FrameStart() {
 void Game::Update(float delta_time_seconds) {
   // Collisions
   {
-    if (stage_ == GameStage::ViewShot) {
-      bool none_moving = true;
-      for (auto ball : balls_) {
-        glm::vec3 center = ball->GetCenter();
+    for (auto ball : balls_) {
+      glm::vec3 center = ball->GetCenter();
 
-        for (auto pocket : pockets_) {
-          if (Ball::CheckCollision(ball, pocket, delta_time_seconds))
-            ball->SetPotted(true);
-        }
-        if (ball->IsPotted()) continue;
+      for (auto pocket : pockets_) {
+        if (Ball::CheckCollision(ball, pocket, delta_time_seconds))
+          ball->SetPotted(true);
+      }
+      if (ball->IsPotted()) continue;
 
-        if (center.z + kBallRadius >= kTableLength / 2 ||
-            center.z - kBallRadius <= -kTableLength / 2) {
-          ball->ReflectZ();
-        }
-        if (center.x + kBallRadius >= kTableWidth / 2 ||
-            center.x - kBallRadius <= -kTableWidth / 2) {
+      if (center.z + kBallRadius > kTableLength / 2 ||
+          center.z - kBallRadius < -kTableLength / 2) {
+        ball->ReflectZ();
+      }
+      if (center.x + kBallRadius > kTableWidth / 2 ||
+          center.x - kBallRadius < -kTableWidth / 2) {
+        if (abs(center.z) + kBallRadius < kPocketRadius)
+          ball->SetPotted(true);
+        else
           ball->ReflectX();
-        }
+      }
 
-        if (ball->IsMoving()) {
-          none_moving = false;
-
-          for (auto another_ball : balls_) {
-            if (another_ball == ball) continue;
-            if (Ball::CheckCollision(ball, another_ball, delta_time_seconds)) {
-              Ball::Bounce(ball, another_ball);
-              break;
-            }
+      if (ball->IsMoving()) {
+        for (auto another_ball : balls_) {
+          if (another_ball == ball) continue;
+          if (Ball::CheckCollision(ball, another_ball, delta_time_seconds)) {
+            Ball::Bounce(ball, another_ball);
+            break;
           }
         }
       }
-
-      if (none_moving) HitCueBall();  // start next shot
     }
   }
 
@@ -305,11 +301,12 @@ void Game::OnInputUpdate(float delta_time, int mods) {
       Ball *cue_ball = balls_[kCueBallIndex];
       glm::vec3 pos = cue_ball->GetCenter();
 
-      if (window->KeyHold(GLFW_KEY_W) && pos.z > kTableLength / 6 + kBallRadius)
+      if (window->KeyHold(GLFW_KEY_W) && pos.z > kTableLength / 4)
         cue_ball->MoveUp(delta_time);
       if (window->KeyHold(GLFW_KEY_A) && pos.x > -kTableWidth / 2 + kBallRadius)
         cue_ball->MoveLeft(delta_time);
-      if (window->KeyHold(GLFW_KEY_S) && pos.z < kTableLength / 2 - kBallRadius)
+      if (window->KeyHold(GLFW_KEY_S) &&
+          pos.z < kTableLength / 2 - kBallRadius - kPocketRadius)
         cue_ball->MoveDown(delta_time);
       if (window->KeyHold(GLFW_KEY_D) && pos.x < kTableWidth / 2 - kBallRadius)
         cue_ball->MoveRight(delta_time);
@@ -332,7 +329,8 @@ void Game::OnInputUpdate(float delta_time, int mods) {
 
 void Game::OnKeyPress(int key, int mods) {
   if (key == GLFW_KEY_SPACE &&
-      (stage_ == GameStage::ViewShot || stage_ == GameStage::PlaceCueBall))
+      (stage_ == GameStage::ViewShot || stage_ == GameStage::PlaceCueBall) &&
+      !balls_[kCueBallIndex]->IsMoving())
     HitCueBall();
 }
 
@@ -344,7 +342,6 @@ void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
   if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT) &&
       stage_ == GameStage::HitCueBall) {
     camera_->RotateOy((float)-delta_x * kSensitivity);
-    camera_->RotateOx((float)-delta_y * kSensitivity);
     cue_->Rotate((float)-delta_x * kSensitivity);
   }
 }
@@ -385,9 +382,9 @@ void Game::HitCueBall() {
   cue_ = new Cue("cue", ball_center, kCueLength, kCueColor);
 
   if (ball_center.x > 0)
-    cue_->Rotate(-camera_->GetOxAngle() + M_PI);  // TODO
+    cue_->Rotate((float)(-camera_->GetOxAngle() + M_PI));
   else
-    cue_->Rotate(camera_->GetOxAngle() - M_PI);  // TODO
+    cue_->Rotate((float)(camera_->GetOxAngle() - M_PI));
   cue_offset_ = 0;
   cue_movement_speed_ = kMovementSpeed;
 }

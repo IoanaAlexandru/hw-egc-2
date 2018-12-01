@@ -132,7 +132,7 @@ class Camera {
     up_ = glm::vec3(0, 0, -1);
     right_ = glm::vec3(-1, 0, 0);
     distance_to_target_ = 0.8f;
-    view_height_ = 0.3;
+    view_height_ = 0.3f;
     projectionMatrix =
         glm::perspective(RADIANS(60), aspect_ratio_, 0.01f, 200.0f);
   }

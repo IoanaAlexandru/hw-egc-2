@@ -26,7 +26,10 @@ class Ball : public Mesh {
     movement_vector_ = movement_vector;
   }
 
-  inline void SetPotted(bool potted) { potted_ = potted; }
+  inline void SetPotted(bool potted) {
+    potted_ = potted;
+    movement_vector_ = glm::vec3(0);
+  }
 
   void MoveUp(float delta_time);
   void MoveDown(float delta_time);
