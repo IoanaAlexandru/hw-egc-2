@@ -34,6 +34,7 @@
     <ClCompile Include="..\Source\Core\World.cpp" />
     <ClCompile Include="..\Source\include\gl.cpp" />
     <ClCompile Include="..\Source\Main.cpp" />
+    <ClCompile Include="..\Source\pool\camera.cc" />
     <ClCompile Include="..\Source\pool\game.cc" />
     <ClCompile Include="..\Source\pool\objects\ball.cc" />
     <ClCompile Include="..\Source\pool\objects\cue.cc" />

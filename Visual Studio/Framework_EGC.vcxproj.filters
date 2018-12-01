@@ -82,6 +82,9 @@
     <ClCompile Include="..\Source\pool\objects\cue.cc">
       <Filter>pool\objects</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\pool\camera.cc">
+      <Filter>pool</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\Core\World.h">
