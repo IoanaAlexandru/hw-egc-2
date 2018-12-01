@@ -8,6 +8,11 @@
 #include "pool/objects/cue.h"
 
 namespace pool {
+typedef struct {
+  int shininess;
+  float kd, ks;
+} MaterialProperties;
+
 class Game : public SimpleScene {
  public:
   Game();
@@ -22,6 +27,7 @@ class Game : public SimpleScene {
 
   void RenderSimpleMesh(Mesh *mesh, Shader *shader,
                         const glm::mat4 &model_matrix, float z_offset,
+                        MaterialProperties properties,
                         const glm::vec3 &color = glm::vec3(1));
 
   void OnInputUpdate(float delta_time, int mods) override;
@@ -39,7 +45,8 @@ class Game : public SimpleScene {
   void TopDownView();
   void ThirdPersonView();
 
-  static const float kTableWidth, kTableLength, kBallRadius, kCueLength, kPocketRadius, kTableBedBorder;
+  static const float kTableWidth, kTableLength, kBallRadius, kCueLength,
+      kPocketRadius, kTableBedBorder;
   static const glm::vec3 kTableBedColor, kTableColor, kTableMetalColor,
       kCueColor, kPlayerOneColor, kPlayerTwoColor;
   static const float kMovementSpeed, kCueBallViewDistance, kCueBallViewHeight,
@@ -48,9 +55,8 @@ class Game : public SimpleScene {
   static const glm::mat4 kTableModelMatrix;
 
   glm::vec3 light_position_;
-  unsigned int ball_shininess_;
-  float ball_kd_;
-  float ball_ks_;
+  MaterialProperties ball_properties_, cue_properties_, metal_properties_,
+      table_properties_, velvet_properties_;
   float cue_offset_;
   float cue_movement_speed_;
 

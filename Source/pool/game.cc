@@ -47,19 +47,21 @@ void Game::Init() {
 
     glm::vec3 pure_black = glm::vec3(0, 0, 0);
     glm::vec3 corner = glm::vec3(-kTableWidth / 2 - kTableBedBorder, 0, 0);
-    pockets_.push_back(new Ball("middle_left", corner, kPocketRadius, pure_black));
+    pockets_.push_back(
+        new Ball("middle_left", corner, kPocketRadius, pure_black));
     pockets_.push_back(new Ball(
         "upper_left", corner + glm::vec3(kTableBedBorder, 0, kTableLength / 2),
         kPocketRadius, pure_black));
-    pockets_.push_back(
-        new Ball("lower_left",
-                 corner + glm::vec3(kTableBedBorder, 0, -kTableLength / 2),
-                 kPocketRadius, pure_black));
-    corner = glm::vec3(kTableWidth / 2 + kTableBedBorder, 0, 0);
-    pockets_.push_back(new Ball("middle_right", corner, kPocketRadius, pure_black));
     pockets_.push_back(new Ball(
-        "upper_right", corner + glm::vec3(-kTableBedBorder, 0, kTableLength / 2),
+        "lower_left", corner + glm::vec3(kTableBedBorder, 0, -kTableLength / 2),
         kPocketRadius, pure_black));
+    corner = glm::vec3(kTableWidth / 2 + kTableBedBorder, 0, 0);
+    pockets_.push_back(
+        new Ball("middle_right", corner, kPocketRadius, pure_black));
+    pockets_.push_back(
+        new Ball("upper_right",
+                 corner + glm::vec3(-kTableBedBorder, 0, kTableLength / 2),
+                 kPocketRadius, pure_black));
     pockets_.push_back(
         new Ball("lower_right",
                  corner + glm::vec3(-kTableBedBorder, 0, -kTableLength / 2),
@@ -117,10 +119,27 @@ void Game::Init() {
 
   // Light & material properties
   {
-    light_position_ = glm::vec3(0, 1.2, 0);
-    ball_shininess_ = 80;
-    ball_kd_ = 0.9f;
-    ball_ks_ = 1.5f;
+    light_position_ = glm::vec3(0, 1.7, 0);
+
+    ball_properties_.shininess = 96;
+    ball_properties_.kd = 1.8;
+    ball_properties_.ks = 1.5;
+
+    cue_properties_.shininess = 96;
+    cue_properties_.kd = 1.5;
+    cue_properties_.ks = 1.5;
+
+    metal_properties_.shininess = 96;
+    metal_properties_.kd = 1.92;
+    metal_properties_.ks = 1.5;
+
+    table_properties_.shininess = 96;
+    table_properties_.kd = 0.014;
+    table_properties_.ks = 1.5;
+
+    velvet_properties_.shininess = 50;
+    velvet_properties_.kd = 1.2;
+    velvet_properties_.ks = 1.5;
   }
 }  // namespace pool
 
@@ -146,7 +165,7 @@ void Game::Update(float delta_time_seconds) {
           if (Ball::CheckCollision(ball, pocket)) ball->SetPotted(true);
         }
         if (ball->IsPotted()) continue;
-        
+
         if (center.z + kBallRadius >= kTableLength / 2 ||
             center.z - kBallRadius <= -kTableLength / 2) {
           ball->ReflectZ();
@@ -176,21 +195,21 @@ void Game::Update(float delta_time_seconds) {
 
   {
     RenderSimpleMesh(table_, shaders["PoolShader"], kTableModelMatrix, 0,
-                     kTableColor);
+                     table_properties_, kTableColor);
     RenderSimpleMesh(table_metal_, shaders["PoolShader"], kTableModelMatrix, 0,
-                     kTableMetalColor);
+                     metal_properties_, kTableMetalColor);
     RenderSimpleMesh(table_bed_, shaders["PoolShader"], kTableModelMatrix, 0,
-                     kTableBedColor);
+                     velvet_properties_, kTableBedColor);
 
     for (auto ball : balls_) {
       ball->Update(delta_time_seconds);
       RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"],
-                       ball->GetModelMatrix(), 0, ball->GetColor());
+                       ball->GetModelMatrix(), 0, ball_properties_, ball->GetColor());
     }
 
     if (GetSceneCamera()->type == EngineComponents::CameraType::ThirdPerson)
       RenderSimpleMesh((Mesh *)cue_, shaders["PoolShader"],
-                       cue_->GetModelMatrix(), cue_offset_, cue_->GetColor());
+                       cue_->GetModelMatrix(), cue_offset_, cue_properties_, cue_->GetColor());
   }
 
   // Render the point light in the scene
@@ -206,6 +225,7 @@ void Game::FrameEnd() { DrawCoordinatSystem(); }
 
 void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
                             const glm::mat4 &model_matrix, float z_offset,
+                            MaterialProperties properties,
                             const glm::vec3 &color) {
   if (!mesh || !shader || !shader->GetProgramID()) return;
 
@@ -222,13 +242,13 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
   glm::vec3 eyePosition = GetSceneCamera()->transform->GetWorldPosition();
   glUniform3fv(eye, 1, glm::value_ptr(eyePosition));
 
-  glUniform1ui(shininess, ball_shininess_);
+  glUniform1ui(shininess, properties.shininess);
 
   GLint kd = glGetUniformLocation(shader->program, "material_kd");
-  glUniform1f(kd, ball_kd_);
+  glUniform1f(kd, properties.kd);
 
   GLint ks = glGetUniformLocation(shader->program, "material_ks");
-  glUniform1f(ks, ball_ks_);
+  glUniform1f(ks, properties.ks);
 
   GLint colorP = glGetUniformLocation(shader->program, "object_color");
   glUniform3fv(colorP, 1, glm::value_ptr(color));
