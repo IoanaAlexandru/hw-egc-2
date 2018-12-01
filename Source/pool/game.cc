@@ -122,24 +122,24 @@ void Game::Init() {
     light_position_ = glm::vec3(0, 1.7, 0);
 
     ball_properties_.shininess = 96;
-    ball_properties_.kd = 1.8;
-    ball_properties_.ks = 1.5;
+    ball_properties_.kd = 1.8f;
+    ball_properties_.ks = 1.5f;
 
     cue_properties_.shininess = 96;
-    cue_properties_.kd = 1.5;
-    cue_properties_.ks = 1.5;
+    cue_properties_.kd = 1.5f;
+    cue_properties_.ks = 1.5f;
 
     metal_properties_.shininess = 96;
-    metal_properties_.kd = 1.92;
-    metal_properties_.ks = 1.5;
+    metal_properties_.kd = 1.92f;
+    metal_properties_.ks = 1.5f;
 
     table_properties_.shininess = 96;
-    table_properties_.kd = 0.014;
-    table_properties_.ks = 1.5;
+    table_properties_.kd = 0.5f;
+    table_properties_.ks = 1.5f;
 
     velvet_properties_.shininess = 50;
-    velvet_properties_.kd = 1.2;
-    velvet_properties_.ks = 1.5;
+    velvet_properties_.kd = 1.2f;
+    velvet_properties_.ks = 1.5f;
   }
 }  // namespace pool
 
@@ -300,8 +300,7 @@ void Game::OnInputUpdate(float delta_time, int mods) {
         light_position_ += up * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_Q))
         light_position_ -= up * delta_time * kMovementSpeed;
-    } else if (GetSceneCamera()->type ==
-               EngineComponents::CameraType::FirstPerson) {
+    } else if (place_cue_ball_) {
       Ball *cue_ball = balls_[kCueBallIndex];
       glm::vec3 pos = cue_ball->GetCenter();
 
