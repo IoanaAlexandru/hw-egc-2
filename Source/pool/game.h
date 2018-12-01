@@ -16,7 +16,7 @@ typedef struct {
 } MaterialProperties;
 
 enum class GameStage {
-  PlaceCueBall, HitCueBall, ViewShot
+  PlaceCueBall, HitCueBall, ViewShot, LookAround
 };
 
 class Game : public SimpleScene {
@@ -50,6 +50,7 @@ class Game : public SimpleScene {
   void ViewShot();
   void PlaceCueBall();
   void HitCueBall();
+  void LookAround();
 
   static const float kTableWidth, kTableLength, kBallRadius, kCueLength,
       kPocketRadius, kTableBedBorder;
@@ -72,7 +73,7 @@ class Game : public SimpleScene {
   std::vector<Ball *> balls_;
   std::vector<Ball *> pockets_;
 
-  GameStage stage_;
+  GameStage stage_, prev_stage_;
 };
 }  // namespace pool
 

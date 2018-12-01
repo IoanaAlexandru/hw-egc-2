@@ -14,7 +14,7 @@ class Camera {
   ~Camera();
 
   void TopDown();
-  void FirstPerson(glm::vec3 target_pos);
+  void FirstPerson();
   void ThirdPerson(glm::vec3 ball_pos, glm::vec3 target_pos);
 
   void TranslateForward(float distance);

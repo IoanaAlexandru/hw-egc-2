@@ -10,9 +10,12 @@ Camera::~Camera() {}
 
 void Camera::TopDown() { ResetDefaults(); }
 
-void Camera::FirstPerson(glm::vec3 target_pos) {
+void Camera::FirstPerson() {
   type_ = CameraType::FirstPerson;
-  // TODO
+  position_ = glm::vec3(0, 1, 5);
+  forward_ = glm::vec3(0, 0, -1);
+  up_ = glm::vec3(0, 1, 0);
+  right_ = glm::vec3(1, 0, 0);
 }
 
 void Camera::ThirdPerson(

@@ -331,7 +331,7 @@ void Game::OnInputUpdate(float delta_time, int mods) {
       if (window->KeyHold(GLFW_KEY_D) && pos.x < kTableWidth / 2 - kBallRadius)
         cue_ball->MoveRight(delta_time);
     }
-  } else {
+  } else if (stage_ == GameStage::LookAround) {
     if (window->KeyHold(GLFW_KEY_W)) camera_->TranslateForward(delta_time);
     if (window->KeyHold(GLFW_KEY_A)) camera_->TranslateRight(-delta_time);
     if (window->KeyHold(GLFW_KEY_S)) camera_->TranslateForward(-delta_time);
@@ -353,15 +353,21 @@ void Game::OnKeyPress(int key, int mods) {
       !balls_[kCueBallIndex]->IsMoving())
     HitCueBall();
   if (key == GLFW_KEY_L) render_lamp_ = !render_lamp_;
+  if (key == GLFW_KEY_V) LookAround();
 }
 
 void Game::OnKeyRelease(int key, int mods) {}
 
 void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
-  if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT) &&
-      stage_ == GameStage::HitCueBall) {
-    camera_->RotateOy((float)-delta_x * kSensitivity);
-    cue_->Rotate((float)-delta_x * kSensitivity);
+  if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
+    if (stage_ == GameStage::HitCueBall) {
+      camera_->RotateOy((float)-delta_x * kSensitivity);
+      cue_->Rotate((float)-delta_x * kSensitivity);
+    }
+    if (stage_ == GameStage::LookAround) {
+      camera_->RotateOy((float)-delta_x * kSensitivity);
+      camera_->RotateOx((float)-delta_y * kSensitivity);
+    }
   }
 }
 
@@ -407,6 +413,25 @@ void Game::HitCueBall() {
     cue_->Rotate((float)(camera_->GetOxAngle() - M_PI));
   cue_offset_ = 0;
   cue_movement_speed_ = kMovementSpeed;
+}
+
+void Game::LookAround() {
+  if (stage_ != GameStage::LookAround && stage_ != GameStage::PlaceCueBall) {
+    prev_stage_ = stage_;
+    stage_ = GameStage::LookAround;
+    camera_->FirstPerson();
+  } else {
+    switch (prev_stage_) {
+      case GameStage::HitCueBall:
+        HitCueBall();
+        break;
+      case GameStage::ViewShot:
+        ViewShot();
+        break;
+      default:
+        break;
+    }
+  }
 }
 
 #pragma endregion
