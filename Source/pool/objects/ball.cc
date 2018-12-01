@@ -162,7 +162,7 @@ void Ball::Bounce(Ball *ball1, Ball *ball2) {
 void Ball::UpdateModelMatrix() {
   model_matrix_ = glm::translate(glm::mat4(1), center_);
   if (potted_)
-    scale_ *= 0.8;
+    scale_ *= std::min(GetSpeed(), 0.999f);
   else
     scale_ = initial_scale_;
   model_matrix_ = glm::scale(model_matrix_, scale_);
