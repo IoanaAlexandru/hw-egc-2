@@ -32,6 +32,13 @@ void Ball::Update(float delta_time) {
   }
 }
 
+void Ball::Reset() {
+  center_ = initial_center_;
+  scale_ = initial_scale_;
+  potted_ = false;
+  UpdateModelMatrix();
+}
+
 void Ball::MoveUp(float delta_time) {
   center_.z -= delta_time * kDefaultSpeed;
   UpdateModelMatrix();

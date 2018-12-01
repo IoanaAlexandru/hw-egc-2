@@ -10,6 +10,7 @@ class Ball : public Mesh {
   ~Ball();
 
   void Update(float delta_time);
+  void Reset();
 
   inline glm::mat4 GetModelMatrix() { return model_matrix_; }
   inline glm::vec3 GetCenter() { return center_; }

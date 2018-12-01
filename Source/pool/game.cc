@@ -185,6 +185,11 @@ void Game::Update(float delta_time_seconds) {
         }
       }
     }
+
+    if (balls_[kCueBallIndex]->IsPotted()) {
+      balls_[kCueBallIndex]->Reset();
+      PlaceCueBall();
+    }
   }
 
   {
