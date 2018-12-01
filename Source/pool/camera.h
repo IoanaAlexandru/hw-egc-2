@@ -3,6 +3,7 @@
 
 #include <include/glm.h>
 #include <include/math.h>
+#include <iostream>
 
 namespace pool {
 enum class CameraType { TopDown, FirstPerson, ThirdPerson };
@@ -28,13 +29,15 @@ class Camera {
     // TODO
   }
 
-  void ThirdPerson(glm::vec3 ball_pos, glm::vec3 target_pos) {  // TODO change to target_pos, direction
+  void ThirdPerson(
+      glm::vec3 ball_pos,
+      glm::vec3 target_pos) {  // TODO change to target_pos, direction
     type_ = CameraType::ThirdPerson;
     position_ = GetViewPoint(target_pos, ball_pos);
-    position_.y += view_height_;
+    position_.y = view_height_;
     forward_ = (target_pos - position_) / distance_to_target_;
     up_ = glm::vec3(0, 1, 0);
-    right_ = glm::cross(forward_, up_);
+    right_ = glm::cross(forward_, up_) / glm::dot(up_, up_);
   }
 
   // Update camera
@@ -45,10 +48,6 @@ class Camera {
     right_ = glm::cross(forward_, up);
     up_ = glm::cross(right_, forward_);
   }
-
-  /*void MoveForward(float distance) {
-    glm::vec3 dir = glm::normalize(glm::vec3(forward_.x, 0, forward_.z));
-  }*/
 
   void TranslateForward(float distance) {
     position_ = position_ + glm::normalize(forward_) * distance;
@@ -105,8 +104,7 @@ class Camera {
     return glm::lookAt(position_, position_ + forward_, up_);
   }
 
-  glm::mat4 GetProjectionMatrix() { return projectionMatrix;
-  }
+  glm::mat4 GetProjectionMatrix() { return projectionMatrix; }
 
   glm::vec3 GetTargetPosition() {
     return position_ + forward_ * distance_to_target_;
@@ -114,6 +112,16 @@ class Camera {
 
   void SetTargetPosition(glm::vec3 target_pos) {
     forward_ = (target_pos - position_) / distance_to_target_;
+  }
+
+  float GetOxAngle() {
+    glm::vec3 target_pos = GetTargetPosition();
+    glm::vec2 v1 = glm::vec2(target_pos.x, target_pos.z);
+    glm::vec2 v2 = glm::vec2(position_.x, position_.z);
+
+    glm::vec2 vec1 = glm::normalize(glm::vec2(0, 1));
+    glm::vec2 vec2 = glm::normalize(v1 - v2);
+    return acos(glm::dot(vec1, vec2));
   }
 
  private:
@@ -130,33 +138,29 @@ class Camera {
   }
 
   void RotateFirstPersonOx(float angle) {
-    glm::vec4 newVector =
-        glm::rotate(glm::mat4(1.0f), angle, glm::vec3(1, 0, 0)) *
-        glm::vec4(forward_, 1);
-    forward_ = glm::normalize(glm::vec3(newVector));
+    forward_ = glm::normalize(
+        glm::vec3(glm::rotate(glm::mat4(1), angle, glm::vec3(1, 0, 0)) *
+                  glm::vec4(forward_, 1)));
 
     up_ = glm::cross(right_, forward_);
   }
 
   void RotateFirstPersonOy(float angle) {
-    glm::vec4 newVector =
-        glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 1, 0)) *
-        glm::vec4(forward_, 1);
-    forward_ = glm::normalize(glm::vec3(newVector));
+    forward_ = glm::normalize(
+        glm::vec3(glm::rotate(glm::mat4(1), angle, glm::vec3(0, 1, 0)) *
+                  glm::vec4(forward_, 1)));
 
-    glm::vec4 newVector2 =
-        glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 1, 0)) *
-        glm::vec4(right_, 1);
-    right_ = glm::normalize(glm::vec3(newVector2));
+    right_ = glm::normalize(
+        glm::vec3(glm::rotate(glm::mat4(1), angle, glm::vec3(0, 1, 0)) *
+                  glm::vec4(right_, 1)));
 
     up_ = glm::cross(right_, forward_);
   }
 
   void RotateFirstPersonOz(float angle) {
-    glm::vec4 newVector =
-        glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1)) *
-        glm::vec4(right_, 1);
-    right_ = glm::normalize(glm::vec3(newVector));
+    right_ = glm::normalize(
+        glm::vec3(glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1)) *
+                  glm::vec4(right_, 1)));
 
     up_ = glm::cross(right_, forward_);
   }
@@ -168,20 +172,20 @@ class Camera {
   }
 
   void RotateThirdPersonOy(float angle) {
-    TranslateUpword(distance_to_target_);
+    TranslateForward(distance_to_target_);
     RotateFirstPersonOy(angle);
-    TranslateUpword(-distance_to_target_);
+    TranslateForward(-distance_to_target_);
   }
 
   void RotateThirdPersonOz(float angle) {
-    TranslateRight(distance_to_target_);
-    RotateFirstPersonOx(angle);
-    TranslateRight(-distance_to_target_);
+    TranslateForward(distance_to_target_);
+    RotateFirstPersonOz(angle);
+    TranslateForward(-distance_to_target_);
   }
 
   glm::vec3 GetViewPoint(glm::vec3 target_pos, glm::vec3 ball_pos) {
     glm::vec3 v = glm::normalize(target_pos - ball_pos);
-     return ball_pos - distance_to_target_ * v;
+    return ball_pos - distance_to_target_ * v;
   }
 
   CameraType type_;

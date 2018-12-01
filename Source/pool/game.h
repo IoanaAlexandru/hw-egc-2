@@ -55,7 +55,7 @@ class Game : public SimpleScene {
       kPocketRadius, kTableBedBorder;
   static const glm::vec3 kTableBedColor, kTableColor, kTableMetalColor,
       kCueColor, kPlayerOneColor, kPlayerTwoColor;
-  static const float kMovementSpeed, kMaxCueOffset;
+  static const float kMovementSpeed, kMaxCueOffset, kSensitivity;
   static const int kBlackBallIndex = 5, kCueBallIndex = 0;
   static const glm::mat4 kTableModelMatrix;
 

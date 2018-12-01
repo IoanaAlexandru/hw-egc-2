@@ -20,7 +20,8 @@ const glm::vec3 Game::kTableBedColor = glm::vec3(0, 0.5, 0.1),
                 Game::kCueColor = glm::vec3(0.5, 0.15, 0.15),
                 Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
                 Game::kPlayerTwoColor = glm::vec3(0.96, 0.76, 0.05);
-const float Game::kMovementSpeed = 2.0f, Game::kMaxCueOffset = 2.0f;
+const float Game::kMovementSpeed = 2.0f, Game::kMaxCueOffset = 2.0f,
+            Game::kSensitivity = 0.001f;
 const glm::mat4 Game::kTableModelMatrix =
     glm::scale(glm::mat4(1), glm::vec3(2.0f));
 
@@ -342,10 +343,9 @@ void Game::OnKeyRelease(int key, int mods) {
 void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
   if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT) &&
       stage_ == GameStage::HitCueBall) {
-    camera_->RotateOy((float)-delta_x * 0.001f);
-    camera_->RotateOx((float)-delta_y * 0.001f);
-
-    cue_->Rotate((float)-delta_x);
+    camera_->RotateOy((float)-delta_x * kSensitivity);
+    camera_->RotateOx((float)-delta_y * kSensitivity);
+    cue_->Rotate((float)-delta_x * kSensitivity);
   }
 }
 
@@ -383,7 +383,11 @@ void Game::HitCueBall() {
   camera_->ThirdPerson(ball_center, default_target);
 
   cue_ = new Cue("cue", ball_center, kCueLength, kCueColor);
-  // cue_->Rotate((view_point.x - ball_center.x) * 360);  // TODO
+
+  if (ball_center.x > 0)
+    cue_->Rotate(-camera_->GetOxAngle() + M_PI);  // TODO
+  else
+    cue_->Rotate(camera_->GetOxAngle() - M_PI);  // TODO
   cue_offset_ = 0;
   cue_movement_speed_ = kMovementSpeed;
 }
