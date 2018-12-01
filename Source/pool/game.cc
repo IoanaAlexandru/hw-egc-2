@@ -46,25 +46,25 @@ void Game::Init() {
     table_metal_->LoadMesh(RESOURCE_PATH::MODELS + "Props", "table_metal.obj");
 
     glm::vec3 pure_black = glm::vec3(0, 0, 0);
-    glm::vec3 corner = glm::vec3(-kTableWidth / 2 - kTableBedBorder, 0, 0);
+    glm::vec3 corner = glm::vec3(-kTableWidth / 2 - kPocketRadius, 0, 0);
     pockets_.push_back(
         new Ball("middle_left", corner, kPocketRadius, pure_black));
     pockets_.push_back(new Ball(
-        "upper_left", corner + glm::vec3(kTableBedBorder, 0, kTableLength / 2),
+        "upper_left", corner + glm::vec3(kPocketRadius, 0, kTableLength / 2),
         kPocketRadius, pure_black));
     pockets_.push_back(new Ball(
-        "lower_left", corner + glm::vec3(kTableBedBorder, 0, -kTableLength / 2),
+        "lower_left", corner + glm::vec3(kPocketRadius, 0, -kTableLength / 2),
         kPocketRadius, pure_black));
-    corner = glm::vec3(kTableWidth / 2 + kTableBedBorder, 0, 0);
+    corner = glm::vec3(kTableWidth / 2 + kPocketRadius, 0, 0);
     pockets_.push_back(
         new Ball("middle_right", corner, kPocketRadius, pure_black));
     pockets_.push_back(
         new Ball("upper_right",
-                 corner + glm::vec3(-kTableBedBorder, 0, kTableLength / 2),
+                 corner + glm::vec3(-kPocketRadius, 0, kTableLength / 2),
                  kPocketRadius, pure_black));
     pockets_.push_back(
         new Ball("lower_right",
-                 corner + glm::vec3(-kTableBedBorder, 0, -kTableLength / 2),
+                 corner + glm::vec3(-kPocketRadius, 0, -kTableLength / 2),
                  kPocketRadius, pure_black));
   }
 

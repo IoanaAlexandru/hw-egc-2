@@ -54,7 +54,7 @@ class Ball : public Mesh {
   glm::mat4 model_matrix_ = glm::mat4(1);
   glm::vec3 color_;
   float radius_;
-  glm::vec3 center_, initial_center_, scale_;
+  glm::vec3 center_, initial_center_, scale_, initial_scale_;
   glm::vec3 movement_vector_;
 
   bool potted_ = false;

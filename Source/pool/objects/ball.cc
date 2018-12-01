@@ -9,13 +9,12 @@ Ball::Ball(std::string name, glm::vec3 center, float radius, glm::vec3 color)
     : Mesh(name) {
   {
     LoadMesh(RESOURCE_PATH::MODELS + "Primitives", "sphere.obj");
-    center_ = center;
-    initial_center_ = center;
+    center_ = initial_center_ = center;
     color_ = color;
     radius_ = radius;
     movement_vector_ = glm::vec3(0);
     model_matrix_ = glm::translate(model_matrix_, center);
-    scale_ = glm::vec3(radius / kDefaultRadius);
+    scale_ = initial_scale_ = glm::vec3(radius / kDefaultRadius);
     model_matrix_ = glm::scale(model_matrix_, scale_);
   }
 }
@@ -128,7 +127,8 @@ bool Ball::DynamicDynamicCollision(Ball *ball1, Ball *ball2, float delta_time) {
 Check if moving ball1 collides with ball2.
 */
 bool Ball::CheckCollision(Ball *ball1, Ball *ball2, float delta_time) {
-  if (ball2->IsMoving()) return DynamicDynamicCollision(ball1, ball2, delta_time);
+  if (ball2->IsMoving())
+    return DynamicDynamicCollision(ball1, ball2, delta_time);
   return DynamicStaticCollision(ball1, ball2, delta_time);
 }
 
@@ -161,6 +161,10 @@ void Ball::Bounce(Ball *ball1, Ball *ball2) {
 
 void Ball::UpdateModelMatrix() {
   model_matrix_ = glm::translate(glm::mat4(1), center_);
+  if (potted_)
+    scale_ *= 0.8;
+  else
+    scale_ = initial_scale_;
   model_matrix_ = glm::scale(model_matrix_, scale_);
 }
 }  // namespace pool
