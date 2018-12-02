@@ -266,15 +266,22 @@ void Game::Update(float delta_time_seconds) {
     }
 
     // Check status and toggle player
-    if (!press_space_to_continue_ && stage_ == GameStage::VIEW_SHOT) {
-      if (current_player_->Fault() && none_moving) {
+    if (!press_space_to_continue_ && stage_ == GameStage::VIEW_SHOT &&
+        none_moving) {
+      if (current_player_->Fault()) {
         TogglePlayer();
         PlaceCueBall();
-      } else if (current_player_->NonePotted() && none_moving) {
+      } else if (current_player_->NoneHit()) {
+        current_player_->AddFault();
+        std::cout << "Fault! No balls were hit." << std::endl;
+        TogglePlayer();
+        PlaceCueBall();
+      } else if (current_player_->NonePotted()) {
         TogglePlayer();
       }
     }
 
+    // Continue if owned ball was potted
     if (!current_player_->NonePotted() && none_moving) {
       press_space_to_continue_ = true;
       current_player_->Reset();

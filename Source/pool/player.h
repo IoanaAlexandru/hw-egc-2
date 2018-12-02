@@ -17,6 +17,7 @@ class Player {
     color_ = glm::vec3(1);
     first_hit_ = glm::vec3(1);
     none_potted_ = true;
+    none_hit_ = true;
     faults_ = 0;
     own_balls_potted_ = 0;
     opponent_balls_potted_ = 0;
@@ -33,19 +34,24 @@ class Player {
   inline void SetColor(glm::vec3 color) { color_ = color; }
   inline std::string GetName() { return name_; }
   inline bool NonePotted() { return none_potted_; }
+  inline bool NoneHit() { return none_hit_; }
   inline bool Fault() { return fault_; }
+  inline void AddFault() { faults_++; }
 
   inline void Reset() {
     if (combo_ > best_combo_) best_combo_ = combo_;
     combo_ = 0;
     first_hit_ = glm::vec3(1);
     none_potted_ = true;
+    none_hit_ = true;
     fault_ = false;
   }
 
   inline void OwnBallPotted() { own_balls_left_--; }
 
   inline HitStatus HitBall(glm::vec3 ball_color) {
+    none_hit_ = false;
+
     if (first_hit_ == glm::vec3(1))
       first_hit_ = ball_color;
     else
@@ -83,6 +89,7 @@ class Player {
     if (color_ == glm::vec3(1)) color_ = ball_color;  // initialise color
     if (color_ == ball_color) {
       own_balls_potted_++;
+      combo_++;
       return PotStatus::OK;
     }
     opponent_balls_potted_++;
@@ -98,7 +105,8 @@ class Player {
               << "> Owned balls potted: " << own_balls_potted_ << std::endl
               << "> Opponent's balls potted: " << opponent_balls_potted_
               << std::endl
-              << "> Cue balls potted: " << cue_balls_potted_ << std::endl;
+              << "> Cue balls potted: " << cue_balls_potted_ << std::endl
+              << "> Best combo: " << best_combo_ << std::endl;
   }
 
  private:
@@ -117,6 +125,7 @@ class Player {
   // Status
   glm::vec3 first_hit_;
   bool none_potted_;
+  bool none_hit_;
   bool fault_;
   int combo_;
 };
