@@ -63,9 +63,15 @@ void Ball::CueHit(glm::vec3 direction, float distance) {
   movement_vector_ = direction * distance;
 }
 
-void Ball::ReflectX() { movement_vector_.x *= -1; }
+void Ball::ReflectX(float offset_x) {
+  movement_vector_.x *= -1;
+  center_.x -= offset_x;
+}
 
-void Ball::ReflectZ() { movement_vector_.z *= -1; }
+void Ball::ReflectZ(float offset_z) {
+  movement_vector_.z *= -1;
+  center_.z -= offset_z;
+}
 
 bool Ball::AreTouching(Ball *ball1, Ball *ball2) {
   return glm::distance(ball1->GetCenter(), ball2->GetCenter()) <=

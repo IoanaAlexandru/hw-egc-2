@@ -39,8 +39,8 @@ class Ball : public Mesh {
 
   void CueHit(glm::vec3 direction, float distance);
 
-  void ReflectX();
-  void ReflectZ();
+  void ReflectX(float offset_x);
+  void ReflectZ(float offset_z);
 
   static bool AreTouching(Ball* ball1, Ball* ball2);
   static bool CheckCollision(Ball* ball1, Ball* ball2, float delta_time);

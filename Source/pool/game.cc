@@ -58,19 +58,19 @@ void Game::Init() {
     pockets_.push_back(
         new Ball("middle_left", corner, kPocketRadius, pure_black));
     pockets_.push_back(new Ball(
-        "upper_left", corner + glm::vec3(kPocketRadius, 0, kTableLength / 2),
+        "lower_left", corner + glm::vec3(kPocketRadius, 0, kTableLength / 2),
         kPocketRadius, pure_black));
     pockets_.push_back(new Ball(
-        "lower_left", corner + glm::vec3(kPocketRadius, 0, -kTableLength / 2),
+        "upper_left", corner + glm::vec3(kPocketRadius, 0, -kTableLength / 2),
         kPocketRadius, pure_black));
     corner = glm::vec3(kTableWidth / 2 + kPocketRadius, 0, 0);
     pockets_.push_back(
         new Ball("middle_right", corner, kPocketRadius, pure_black));
     pockets_.push_back(new Ball(
-        "upper_right", corner + glm::vec3(-kPocketRadius, 0, kTableLength / 2),
+        "lower_right", corner + glm::vec3(-kPocketRadius, 0, kTableLength / 2),
         kPocketRadius, pure_black));
     pockets_.push_back(new Ball(
-        "lower_right", corner + glm::vec3(-kPocketRadius, 0, -kTableLength / 2),
+        "upper_right", corner + glm::vec3(-kPocketRadius, 0, -kTableLength / 2),
         kPocketRadius, pure_black));
   }
 
@@ -171,35 +171,43 @@ void Game::Update(float delta_time_seconds) {
   // Collisions
   {
     for (auto ball : balls_) {
-      glm::vec3 center = ball->GetCenter();
+      if (!ball->IsPotted()) {
+        glm::vec3 center = ball->GetCenter();
 
-      // Pockets
-      for (auto pocket : pockets_) {
-        if (Ball::CheckCollision(ball, pocket, delta_time_seconds))
+        // Pockets
+        for (auto pocket : pockets_) {
+          if (Ball::CheckCollision(ball, pocket, delta_time_seconds)) {
+            ball->SetPotted(true);
+          }
+        }
+        if (ball->IsPotted()) continue;
+
+        // Rails
+        float down = center.z + kBallRadius - kTableLength / 2;
+        float up = center.z - kBallRadius + kTableLength / 2;
+        float right = center.x + kBallRadius - kTableWidth / 2;
+        float left = center.x - kBallRadius + kTableWidth / 2;
+        bool middle = abs(center.z) + kBallRadius < kPocketRadius;
+
+        if (down > 0)
+          ball->ReflectZ(down);
+        else if (up < 0)
+          ball->ReflectZ(up);
+        else if (right > 0 && !middle)
+          ball->ReflectX(right);
+        else if (left < 0 && !middle)
+          ball->ReflectX(left);
+        else if ((right > 0 || left < 0) && middle)
           ball->SetPotted(true);
-      }
-      if (ball->IsPotted()) continue;
 
-      // Rails
-      if (center.z + kBallRadius > kTableLength / 2 ||
-          center.z - kBallRadius < -kTableLength / 2) {
-        ball->ReflectZ();
-      }
-      if (center.x + kBallRadius > kTableWidth / 2 ||
-          center.x - kBallRadius < -kTableWidth / 2) {
-        if (abs(center.z) + kBallRadius < kPocketRadius)
-          ball->SetPotted(true);
-        else
-          ball->ReflectX();
-      }
-
-      // Balls
-      if (ball->IsMoving()) {
-        for (auto another_ball : balls_) {
-          if (another_ball == ball) continue;
-          if (Ball::CheckCollision(ball, another_ball, delta_time_seconds)) {
-            Ball::Bounce(ball, another_ball);
-            break;
+        // Balls
+        if (ball->IsMoving()) {
+          for (auto another_ball : balls_) {
+            if (another_ball == ball || another_ball->IsPotted()) continue;
+            if (Ball::CheckCollision(ball, another_ball, delta_time_seconds)) {
+              Ball::Bounce(ball, another_ball);
+              break;
+            }
           }
         }
       }
