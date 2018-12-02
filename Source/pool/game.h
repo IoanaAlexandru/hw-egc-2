@@ -23,13 +23,13 @@ class Game : public SimpleScene {
   Game();
   ~Game();
 
-  Player GetPlayerName(std::string default);
-
-  void EndGame();
-
   void Init() override;
 
   void StartGame();
+  Player GetPlayerName(std::string default);
+  void EndGame();
+  void TogglePlayer();
+  void Help();
 
  private:
   void FrameStart() override;
@@ -51,10 +51,6 @@ class Game : public SimpleScene {
   void OnMouseScroll(int mouse_x, int mouse_y, int offset_x,
                      int offset_y) override;
   void OnWindowResize(int width, int height) override;
-
-  void Help();
-
-  void TogglePlayer();
 
   /*
   Same as PlaceCueBall, but ball can only be placed in the first quarter of the
@@ -122,7 +118,7 @@ class Game : public SimpleScene {
   Player player_one_, player_two_;
   Player *current_player_;
   std::unordered_map<GameStage, bool> print_help_;
-  bool press_space_to_continue_;
+  bool press_space_to_continue_, end_;
 };
 }  // namespace pool
 

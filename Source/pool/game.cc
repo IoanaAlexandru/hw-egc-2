@@ -163,6 +163,68 @@ void Game::Init() {
   }
 }
 
+#pragma region GAME CONTROL
+
+void Game::StartGame() {
+  std::cout << std::endl << "Welcome to 8-ball-pool!" << std::endl;
+  player_one_ = GetPlayerName("Player1");
+  player_two_ = GetPlayerName("Player2");
+
+  current_player_ = &player_one_;
+  press_space_to_continue_ = true;
+  end_ = false;
+}
+
+Player Game::GetPlayerName(std::string default) {
+  std::string name;
+  std::cout << "Please enter name for " << default
+            << " (press Enter for default): ";
+  std::getline(std::cin, name);
+  if (name.empty()) {
+    name = default;
+  }
+  return Player(name);
+}
+
+void Game::EndGame() {
+  LookAround();
+  player_one_.PrintStats();
+  player_two_.PrintStats();
+}
+
+void Game::TogglePlayer() {
+  if (current_player_ == &player_one_)
+    current_player_ = &player_two_;
+  else
+    current_player_ = &player_one_;
+  std::cout << std::endl
+            << current_player_->GetName()
+            << "'s turn. Press SPACE to start your shot." << std::endl;
+
+  current_player_->Reset();
+  press_space_to_continue_ = true;
+}
+
+void Game::Help() {
+  std::cout
+      << std::endl
+      << "=============================== HELP ==============================="
+      << std::endl
+      << "* General controls: Press V at any time to toggle LookAround mode"
+      << std::endl
+      << "and explore the world freely." << std::endl
+      << "* Lamp controls: Press CTRL + the directional keys to move the lamp."
+      << std::endl
+      << "* Break controls: Place the cue ball using the WASD keys, then press"
+      << std::endl
+      << "SPACE to start your shot." << std::endl
+      << "===================================================================="
+      << std::endl;
+  ;
+}
+
+#pragma endregion
+
 void Game::FrameStart() {
   // clears the color buffer (using the previously set color) and depth buffer
   glClearColor(0, 0, 0, 1);
@@ -235,8 +297,7 @@ void Game::Update(float delta_time_seconds) {
               EndGame();
               break;
             case PotStatus::WIN:
-              std::cout << current_player_->GetName() << " won." << std::endl;
-              EndGame();
+              end_ = true;
               break;
             default:
               break;
@@ -279,6 +340,17 @@ void Game::Update(float delta_time_seconds) {
       } else if (current_player_->NonePotted()) {
         TogglePlayer();
       }
+    }
+
+    if (end_ && none_moving) {
+      if (balls_[kCueBallIndex]->IsPotted())
+        std::cout << current_player_->GetName()
+                  << " lost by potting the cue ball with the black ball."
+                  << std::endl;
+      else
+        std::cout << current_player_->GetName() << " won." << std::endl;
+      EndGame();
+      end_ = false;
     }
 
     // Continue if owned ball was potted
@@ -510,68 +582,11 @@ void Game::OnWindowResize(int width, int height) {}
 
 #pragma endregion
 
-void Game::Help() {
-  std::cout
-      << std::endl
-      << "=============================== HELP ==============================="
-      << std::endl
-      << "* General controls: Press V at any time to toggle LookAround mode"
-      << std::endl
-      << "and explore the world freely." << std::endl
-      << "* Lamp controls: Press CTRL + the directional keys to move the lamp."
-      << std::endl
-      << "* Break controls: Place the cue ball using the WASD keys, then press"
-      << std::endl
-      << "SPACE to start your shot." << std::endl
-      << "===================================================================="
-      << std::endl;
-  ;
-}
-
-void Game::StartGame() {
-  std::cout << std::endl << "Welcome to 8-ball-pool!" << std::endl;
-  player_one_ = GetPlayerName("Player1");
-  player_two_ = GetPlayerName("Player2");
-
-  current_player_ = &player_one_;
-  press_space_to_continue_ = true;
-}
-
-Player Game::GetPlayerName(std::string default) {
-  std::string name;
-  std::cout << "Please enter name for " << default
-            << " (press Enter for default): ";
-  std::getline(std::cin, name);
-  if (name.empty()) {
-    name = default;
-  }
-  return Player(name);
-}
-
-void Game::EndGame() {
-  LookAround();
-  player_one_.PrintStats();
-  player_two_.PrintStats();
-}
-
-void Game::TogglePlayer() {
-  if (current_player_ == &player_one_)
-    current_player_ = &player_two_;
-  else
-    current_player_ = &player_one_;
-  std::cout << std::endl
-            << current_player_->GetName()
-            << "'s turn. Press SPACE to start your shot." << std::endl;
-
-  current_player_->Reset();
-  press_space_to_continue_ = true;
-}
-
 #pragma region GAME STAGES
 
 void Game::Break() {
   std::cout << std::endl
-            << current_player_->GetName() << " is Breaking. Good luck!"
+            << current_player_->GetName() << " is breaking. Good luck!"
             << std::endl;
   std::cout
       << "Place the cue ball using the WASD keys, then press SPACE to start"
