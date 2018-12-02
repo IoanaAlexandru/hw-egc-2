@@ -25,6 +25,7 @@ class Player {
     own_balls_left_ = 7;
     best_combo_ = 0;
     combo_ = 0;
+    fault_ = false;
     this->name_ = name;
   }
 
