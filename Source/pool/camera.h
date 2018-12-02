@@ -31,6 +31,7 @@ class Camera {
   glm::vec3 GetTargetPosition();
   void SetTargetPosition(glm::vec3 target_pos);
 
+  // Get angle of rotation on Ox between the target and the camera
   float GetOxAngle();
 
  private:
@@ -54,7 +55,6 @@ class Camera {
   glm::vec3 up_;
 
   glm::mat4 projection_matrix_ = glm::mat4(1);
-  float left, right, bottom, top, zNear, zFar, aspect, fov;
 };
 }  // namespace pool
 

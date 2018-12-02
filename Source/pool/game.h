@@ -15,9 +15,7 @@ typedef struct {
   float kd, ks;
 } MaterialProperties;
 
-enum class GameStage {
-  PlaceCueBall, HitCueBall, ViewShot, LookAround
-};
+enum class GameStage { PlaceCueBall, HitCueBall, ViewShot, LookAround };
 
 class Game : public SimpleScene {
  public:
@@ -47,31 +45,61 @@ class Game : public SimpleScene {
                      int offset_y) override;
   void OnWindowResize(int width, int height) override;
 
+  /*
+  View shot from above.
+  Can toggle LookAround mode with V, or to HitCueBall mode with SPACE if cue
+  ball isn't moving.
+  */
   void ViewShot();
+  /*
+  Place cue ball with the WASD keys.
+  Press V to toggle LookAround mode, or press SPACE to start shot.
+  */
   void PlaceCueBall();
+  /*
+  Press RIGHT_MOUSE_BUTTON and move mouse to position shot horizontally. Press
+  LEFT_MOUSE_BUTTON to start moving cue, release to hit (the further the cue is
+  from the ball, the stronger the shot).
+  */
   void HitCueBall();
+  /*
+  Toggle LookAround mode. When enabled, look around using the mouse and the
+  WASDEQ keys (first-person view) by pressing RIGHT_MOUSE_BUTTON.
+  */
   void LookAround();
 
+#pragma region CONSTANTS
+  // Object size constants
   static const float kTableWidth, kTableLength, kBallRadius, kCueLength,
       kPocketRadius, kTableBedBorder;
-  static const glm::vec3 kTableBedColor, kTableColor, kMetalColor,
-      kCueColor, kPlayerOneColor, kPlayerTwoColor;
-  static const float kMovementSpeed, kMaxCueOffset, kSensitivity;
-  static const int kBlackBallIndex = 5, kCueBallIndex = 0;
+  // Color constants
+  static const glm::vec3 kTableBedColor, kTableColor, kMetalColor, kCueColor,
+      kPlayerOneColor, kPlayerTwoColor;
+  // Speed constants
+  static const float kMovementSpeed, kSensitivity;
+
+  static const float kMaxCueOffset;
+  static const int kBlackBallIndex, kCueBallIndex;
   static const glm::mat4 kTableModelMatrix;
+#pragma endregion
+
+  // 3D scene elements
 
   Camera *camera_;
-
-  glm::vec3 light_position_;
-  MaterialProperties ball_properties_, cue_properties_, metal_properties_,
-      table_properties_, velvet_properties_;
-  float cue_offset_, cue_movement_speed_;
-  bool render_lamp_;
-
   Mesh *table_, *table_bed_, *table_metal_, *lamp_;
   Cue *cue_;
   std::vector<Ball *> balls_;
   std::vector<Ball *> pockets_;
+
+  // Object properties
+
+  MaterialProperties ball_properties_, cue_properties_, metal_properties_,
+      table_properties_, velvet_properties_;
+  glm::vec3 lamp_position_;
+  bool render_lamp_;
+  float cue_offset_, cue_movement_speed_;
+
+  // Game elements
 
   GameStage stage_, prev_stage_;
 };

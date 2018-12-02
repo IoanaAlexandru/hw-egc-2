@@ -11,6 +11,7 @@ using namespace std;
 
 namespace pool {
 
+#pragma region CONSTANTS
 const float Game::kTableWidth = 2.16f, Game::kTableLength = 4.26f,
             Game::kBallRadius = 0.07f, Game::kCueLength = 2.6f,
             Game::kPocketRadius = 0.12f, Game::kTableBedBorder = 0.08f;
@@ -20,10 +21,12 @@ const glm::vec3 Game::kTableBedColor = glm::vec3(0, 0.5, 0.1),
                 Game::kCueColor = glm::vec3(0.5, 0.15, 0.15),
                 Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
                 Game::kPlayerTwoColor = glm::vec3(0.96, 0.76, 0.05);
-const float Game::kMovementSpeed = 2.0f, Game::kMaxCueOffset = 2.0f,
-            Game::kSensitivity = 0.001f;
+const float Game::kMovementSpeed = 2.0f, Game::kSensitivity = 0.001f;
+const float Game::kMaxCueOffset = 2.0f;
+const int Game::kBlackBallIndex = 5, Game::kCueBallIndex = 0;
 const glm::mat4 Game::kTableModelMatrix =
     glm::scale(glm::mat4(1), glm::vec3(2.0f));
+#pragma endregion
 
 Game::Game() {}
 
@@ -103,6 +106,7 @@ void Game::Init() {
     }
   }
 
+  // Lamp
   {
     lamp_ = new Mesh("lamp");
     lamp_->LoadMesh(RESOURCE_PATH::MODELS + "Props", "lamp.obj");
@@ -121,7 +125,7 @@ void Game::Init() {
 
   // Light & material properties
   {
-    light_position_ = glm::vec3(0, 1.7, 0);
+    lamp_position_ = glm::vec3(0, 1.7, 0);
 
     ball_properties_.shininess = 96;
     ball_properties_.kd = 1.8f;
@@ -229,7 +233,7 @@ void Game::Update(float delta_time_seconds) {
     // Light point
     if (render_lamp_)
       RenderSimpleMesh(lamp_, shaders["PoolShader"],
-                       glm::translate(glm::mat4(1), light_position_), 0,
+                       glm::translate(glm::mat4(1), lamp_position_), 0,
                        metal_properties_, kMetalColor);
   }
 }
@@ -249,7 +253,7 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
 
   // Set shader uniforms for light & material properties
   GLint light_loc = glGetUniformLocation(shader->program, "light_position");
-  glUniform3fv(light_loc, 1, glm::value_ptr(light_position_));
+  glUniform3fv(light_loc, 1, glm::value_ptr(lamp_position_));
 
   GLint shininess_loc =
       glGetUniformLocation(shader->program, "material_shininess");
@@ -300,24 +304,25 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
 void Game::OnInputUpdate(float delta_time, int mods) {
   if (!window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
     if (mods == GLFW_MOD_CONTROL) {
+      // Control light position using CTRL + W, A, S, D, E, Q
       glm::vec3 up = glm::vec3(0, 1, 0);
       glm::vec3 right = glm::vec3(1, 0, 0);
       glm::vec3 forward = glm::vec3(0, 0, 1);
 
-      // Control light position using on W, A, S, D, E, Q
       if (window->KeyHold(GLFW_KEY_W))
-        light_position_ -= forward * delta_time * kMovementSpeed;
+        lamp_position_ -= forward * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_A))
-        light_position_ -= right * delta_time * kMovementSpeed;
+        lamp_position_ -= right * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_S))
-        light_position_ += forward * delta_time * kMovementSpeed;
+        lamp_position_ += forward * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_D))
-        light_position_ += right * delta_time * kMovementSpeed;
+        lamp_position_ += right * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_E))
-        light_position_ += up * delta_time * kMovementSpeed;
+        lamp_position_ += up * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_Q))
-        light_position_ -= up * delta_time * kMovementSpeed;
+        lamp_position_ -= up * delta_time * kMovementSpeed;
     } else if (stage_ == GameStage::PlaceCueBall) {
+      // Move cue ball using W, A, S, D
       Ball *cue_ball = balls_[kCueBallIndex];
       glm::vec3 pos = cue_ball->GetCenter();
 
@@ -332,6 +337,7 @@ void Game::OnInputUpdate(float delta_time, int mods) {
         cue_ball->MoveRight(delta_time);
     }
   } else if (stage_ == GameStage::LookAround) {
+    // Move camera using W, A, S, D, E, Q
     if (window->KeyHold(GLFW_KEY_W)) camera_->TranslateForward(delta_time);
     if (window->KeyHold(GLFW_KEY_A)) camera_->TranslateRight(-delta_time);
     if (window->KeyHold(GLFW_KEY_S)) camera_->TranslateForward(-delta_time);
@@ -341,6 +347,7 @@ void Game::OnInputUpdate(float delta_time, int mods) {
   }
 
   if (window->MouseHold(GLFW_MOUSE_BUTTON_LEFT)) {
+    // Move cue closer/further from the ball to choose shot intensity
     cue_offset_ += cue_movement_speed_ * delta_time;
     if (cue_offset_ >= kMaxCueOffset || cue_offset_ <= 0)
       cue_movement_speed_ *= -1;
@@ -348,11 +355,16 @@ void Game::OnInputUpdate(float delta_time, int mods) {
 }
 
 void Game::OnKeyPress(int key, int mods) {
+  // Press SPACE to start shot if cue ball isn't moving
   if (key == GLFW_KEY_SPACE &&
       (stage_ == GameStage::ViewShot || stage_ == GameStage::PlaceCueBall) &&
       !balls_[kCueBallIndex]->IsMoving())
     HitCueBall();
+
+  // Press L to hide/unhide lamp
   if (key == GLFW_KEY_L) render_lamp_ = !render_lamp_;
+
+  // Press V to toggle LookAround mode
   if (key == GLFW_KEY_V) LookAround();
 }
 
@@ -361,10 +373,12 @@ void Game::OnKeyRelease(int key, int mods) {}
 void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
   if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
     if (stage_ == GameStage::HitCueBall) {
+      // Move cue and camera left and right
       camera_->RotateOy((float)-delta_x * kSensitivity);
       cue_->Rotate((float)-delta_x * kSensitivity);
     }
     if (stage_ == GameStage::LookAround) {
+      // Move camera left/right/up/down
       camera_->RotateOy((float)-delta_x * kSensitivity);
       camera_->RotateOx((float)-delta_y * kSensitivity);
     }
@@ -376,6 +390,7 @@ void Game::OnMouseBtnPress(int mouse_x, int mouse_y, int button, int mods) {}
 void Game::OnMouseBtnRelease(int mouse_x, int mouse_y, int button, int mods) {
   if (button == 1 &&  // GLFW_MOUSE_BUTTON_LEFT not working?
       cue_offset_ >= 0 && stage_ == GameStage::HitCueBall) {
+    // Release LEFT_MOUSE_BUTTON to hit cue ball
     balls_[kCueBallIndex]->CueHit(cue_->GetDirection(), -cue_offset_);
     ViewShot();
   }
@@ -391,21 +406,26 @@ void Game::OnWindowResize(int width, int height) {}
 #pragma region GAME STAGES
 
 void Game::ViewShot() {
+  prev_stage_ = stage_;
   stage_ = GameStage::ViewShot;
   camera_->TopDown();
 }
 
 void Game::PlaceCueBall() {
+  prev_stage_ = stage_;
   stage_ = GameStage::PlaceCueBall;
   camera_->TopDown();
 }
 
 void Game::HitCueBall() {
+  prev_stage_ = stage_;
   stage_ = GameStage::HitCueBall;
-  glm::vec3 default_target = glm::vec3(0);
+  glm::vec3 default_target = glm::vec3(0);  // look at center of table
   glm::vec3 ball_center = balls_[kCueBallIndex]->GetCenter();
   camera_->ThirdPerson(ball_center, default_target);
 
+  // Initialise cue // TODO make reset method for cue so it doesn't need to be
+  // initialised every time
   cue_ = new Cue("cue", ball_center, kCueLength, kCueColor);
   if (ball_center.x > 0)
     cue_->Rotate((float)(-camera_->GetOxAngle() + M_PI));
@@ -416,7 +436,7 @@ void Game::HitCueBall() {
 }
 
 void Game::LookAround() {
-  if (stage_ != GameStage::LookAround && stage_ != GameStage::PlaceCueBall) {
+  if (stage_ != GameStage::LookAround) {
     prev_stage_ = stage_;
     stage_ = GameStage::LookAround;
     camera_->FirstPerson();
@@ -427,6 +447,9 @@ void Game::LookAround() {
         break;
       case GameStage::ViewShot:
         ViewShot();
+        break;
+      case GameStage::PlaceCueBall:
+        PlaceCueBall();
         break;
       default:
         break;
