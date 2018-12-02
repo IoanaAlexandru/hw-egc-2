@@ -15,15 +15,16 @@ class Cue : Mesh {
   inline glm::vec3 GetDirection() { return direction_; }
   inline float GetLength() { return length_; }
 
+  void Reposition(glm::vec3 tip);
   void Rotate(float delta_x);
 
  private:
-  float kDefaultLength = 18.5f, kDefaultSpeed = 1.8f;
+  float kDefaultLength = 18.5f;
 
   glm::mat4 model_matrix_ = glm::mat4(1);
   glm::vec3 color_;
   float length_;
-  glm::vec3 tip_, initial_tip_, scale_;
+  glm::vec3 tip_, scale_;
   glm::vec3 direction_;
 };
 }  // namespace pool

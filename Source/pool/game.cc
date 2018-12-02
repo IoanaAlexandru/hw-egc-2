@@ -106,6 +106,14 @@ void Game::Init() {
     }
   }
 
+  // Cue
+  {
+    cue_ = new Cue("cue", balls_[kCueBallIndex]->GetCenter(), kCueLength,
+                   kCueColor);
+    cue_offset_ = 0;
+    cue_movement_speed_ = kMovementSpeed;
+  }
+
   // Lamp
   {
     lamp_ = new Mesh("lamp");
@@ -424,15 +432,13 @@ void Game::HitCueBall() {
   glm::vec3 ball_center = balls_[kCueBallIndex]->GetCenter();
   camera_->ThirdPerson(ball_center, default_target);
 
-  // Initialise cue // TODO make reset method for cue so it doesn't need to be
-  // initialised every time
-  cue_ = new Cue("cue", ball_center, kCueLength, kCueColor);
+  // Reposition cue
+  cue_->Reposition(ball_center);
   if (ball_center.x > 0)
     cue_->Rotate((float)(-camera_->GetOxAngle() + M_PI));
   else
     cue_->Rotate((float)(camera_->GetOxAngle() - M_PI));
   cue_offset_ = 0;
-  cue_movement_speed_ = kMovementSpeed;
 }
 
 void Game::LookAround() {

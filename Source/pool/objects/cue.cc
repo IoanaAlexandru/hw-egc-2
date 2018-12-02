@@ -8,7 +8,7 @@ Cue::Cue(std::string name, glm::vec3 tip, float length, glm::vec3 color)
     : Mesh(name) {
   {
     LoadMesh(RESOURCE_PATH::MODELS + "Props", "pool_cue.obj");
-    tip_ = initial_tip_ = tip;
+    tip_ = tip;
     color_ = color;
     length = length;
     direction_ = glm::vec3(0, 0, 1);
@@ -19,6 +19,13 @@ Cue::Cue(std::string name, glm::vec3 tip, float length, glm::vec3 color)
 }
 
 Cue::~Cue(){};
+
+void Cue::Reposition(glm::vec3 tip) {
+  tip_ = tip;
+  direction_ = glm::vec3(0, 0, 1);
+  model_matrix_ = glm::translate(glm::mat4(1), tip_);
+  model_matrix_ = glm::scale(model_matrix_, scale_);
+}
 
 void Cue::Rotate(float angle) {
   model_matrix_ = glm::rotate(model_matrix_, angle, glm::vec3(0, 1, 0));
