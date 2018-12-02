@@ -20,7 +20,7 @@ void Camera::FirstPerson() {
 
 void Camera::ThirdPerson(
     glm::vec3 ball_pos,
-    glm::vec3 target_pos) {  // TODO change to target_pos, direction
+    glm::vec3 target_pos) {
   type_ = CameraType::ThirdPerson;
   position_ = GetViewPoint(target_pos, ball_pos);
   position_.y = view_height_;
