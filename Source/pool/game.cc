@@ -37,7 +37,7 @@ void Game::Init() {
   {
     render_lamp_ = true;
     camera_ = new Camera(window->props.aspectRatio);
-    PlaceCueBall();
+    Break();
   }
 
   // Table
@@ -171,6 +171,7 @@ void Game::FrameStart() {
 void Game::Update(float delta_time_seconds) {
   // Collisions
   {
+    bool none_moving = true;
     for (auto ball : balls_) {
       if (!ball->IsPotted()) {
         glm::vec3 center = ball->GetCenter();
@@ -203,6 +204,7 @@ void Game::Update(float delta_time_seconds) {
 
         // Balls
         if (ball->IsMoving()) {
+          none_moving = false;
           for (auto another_ball : balls_) {
             if (another_ball == ball || another_ball->IsPotted()) continue;
             if (Ball::CheckCollision(ball, another_ball, delta_time_seconds)) {
@@ -213,11 +215,11 @@ void Game::Update(float delta_time_seconds) {
         }
       }
     }
-  }
+  
 
-  // Check status of special balls
-  {
-    if (balls_[kCueBallIndex]->IsPotted()) {
+    // Check status of special balls
+  
+    if (balls_[kCueBallIndex]->IsPotted() && none_moving) {
       balls_[kCueBallIndex]->Reset();
       PlaceCueBall();
     }
@@ -338,20 +340,35 @@ void Game::OnInputUpdate(float delta_time, int mods) {
         lamp_position_ += up * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_Q))
         lamp_position_ -= up * delta_time * kMovementSpeed;
-    } else if (stage_ == GameStage::PlaceCueBall) {
+    } else if (stage_ == GameStage::PlaceCueBall ||
+               stage_ == GameStage::Break) {
       // Move cue ball using W, A, S, D
       Ball *cue_ball = balls_[kCueBallIndex];
       glm::vec3 pos = cue_ball->GetCenter();
 
-      if (window->KeyHold(GLFW_KEY_W) && pos.z > kTableLength / 4)
+      float upper_limit = stage_ == GameStage::Break
+                              ? kTableLength / 4
+                              : -kTableLength / 2 + kBallRadius;
+
+      if (window->KeyHold(GLFW_KEY_W) && pos.z > upper_limit)
         cue_ball->MoveUp(delta_time);
       if (window->KeyHold(GLFW_KEY_A) && pos.x > -kTableWidth / 2 + kBallRadius)
         cue_ball->MoveLeft(delta_time);
-      if (window->KeyHold(GLFW_KEY_S) &&
-          pos.z < kTableLength / 2 - kBallRadius - kPocketRadius)
+      if (window->KeyHold(GLFW_KEY_S) && pos.z < kTableLength / 2 - kBallRadius)
         cue_ball->MoveDown(delta_time);
       if (window->KeyHold(GLFW_KEY_D) && pos.x < kTableWidth / 2 - kBallRadius)
         cue_ball->MoveRight(delta_time);
+
+      // Reverse movement if balls are touching
+      for (auto ball : balls_) {
+        if (cue_ball == ball || ball->IsPotted()) continue;
+        if (Ball::AreTouching(cue_ball, ball)) {
+          if (window->KeyHold(GLFW_KEY_W)) cue_ball->MoveDown(delta_time);
+          if (window->KeyHold(GLFW_KEY_A)) cue_ball->MoveRight(delta_time);
+          if (window->KeyHold(GLFW_KEY_S)) cue_ball->MoveUp(delta_time);
+          if (window->KeyHold(GLFW_KEY_D)) cue_ball->MoveLeft(delta_time);
+        }
+      }
     }
   } else if (stage_ == GameStage::LookAround) {
     // Move camera using W, A, S, D, E, Q
@@ -373,8 +390,7 @@ void Game::OnInputUpdate(float delta_time, int mods) {
 
 void Game::OnKeyPress(int key, int mods) {
   // Press SPACE to start shot if cue ball isn't moving
-  if (key == GLFW_KEY_SPACE &&
-      (stage_ == GameStage::ViewShot || stage_ == GameStage::PlaceCueBall) &&
+  if (key == GLFW_KEY_SPACE && (stage_ != GameStage::HitCueBall) &&
       !balls_[kCueBallIndex]->IsMoving())
     HitCueBall();
 
@@ -422,6 +438,11 @@ void Game::OnWindowResize(int width, int height) {}
 
 #pragma region GAME STAGES
 
+void Game::Break() {
+  prev_stage_ = stage_ = GameStage::Break;
+  camera_->TopDown();
+}
+
 void Game::ViewShot() {
   prev_stage_ = stage_;
   stage_ = GameStage::ViewShot;
@@ -465,6 +486,9 @@ void Game::LookAround() {
         break;
       case GameStage::PlaceCueBall:
         PlaceCueBall();
+        break;
+      case GameStage::Break:
+        Break();
         break;
       default:
         break;

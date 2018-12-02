@@ -15,7 +15,7 @@ typedef struct {
   float kd, ks;
 } MaterialProperties;
 
-enum class GameStage { PlaceCueBall, HitCueBall, ViewShot, LookAround };
+enum class GameStage { Break, PlaceCueBall, HitCueBall, ViewShot, LookAround };
 
 class Game : public SimpleScene {
  public:
@@ -45,6 +45,11 @@ class Game : public SimpleScene {
                      int offset_y) override;
   void OnWindowResize(int width, int height) override;
 
+  /*
+  Same as PlaceCueBall, but ball can only be placed in the first quarter of the
+  table.
+  */
+  void Break();
   /*
   View shot from above.
   Can toggle LookAround mode with V, or to HitCueBall mode with SPACE if cue
