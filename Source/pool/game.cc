@@ -34,12 +34,6 @@ Game::Game() {}
 Game::~Game() {}
 
 void Game::Init() {
-  {
-    render_lamp_ = true;
-    camera_ = new Camera(window->props.aspectRatio);
-    Break();
-  }
-
   // Table
   {
     table_ = new Mesh("table");
@@ -156,6 +150,34 @@ void Game::Init() {
     velvet_properties_.kd = 1.2f;
     velvet_properties_.ks = 1.5f;
   }
+
+  {
+    render_lamp_ = true;
+    camera_ = new Camera(window->props.aspectRatio);
+
+    print_help_.emplace(GameStage::HitCueBall, true);
+    print_help_.emplace(GameStage::LookAround, true);
+    print_help_.emplace(GameStage::PlaceCueBall, true);
+
+    std::cout << std::endl << "Welcome to 8-ball-pool!" << std::endl;
+    player_one_ = GetPlayerName("Player1");
+    player_two_ = GetPlayerName("Player2");
+
+    current_player_ = &player_one_;
+
+    Break();
+  }
+}
+
+Player Game::GetPlayerName(std::string default) {
+  std::string name;
+  std::cout << "Please enter name for " << default
+            << " (press Enter for default): ";
+  std::getline(std::cin, name);
+  if (name.empty()) {
+    name = default;
+  }
+  return Player(name);
 }
 
 void Game::FrameStart() {
@@ -215,12 +237,12 @@ void Game::Update(float delta_time_seconds) {
         }
       }
     }
-  
 
     // Check status of special balls
-  
+
     if (balls_[kCueBallIndex]->IsPotted() && none_moving) {
       balls_[kCueBallIndex]->Reset();
+      TogglePlayer();
       PlaceCueBall();
     }
   }
@@ -399,6 +421,9 @@ void Game::OnKeyPress(int key, int mods) {
 
   // Press V to toggle LookAround mode
   if (key == GLFW_KEY_V) LookAround();
+
+  // Press H to print help
+  if (key == GLFW_KEY_H) Help();
 }
 
 void Game::OnKeyRelease(int key, int mods) {}
@@ -436,9 +461,45 @@ void Game::OnWindowResize(int width, int height) {}
 
 #pragma endregion
 
+void Game::Help() {
+  std::cout
+      << std::endl
+      << "=============================== HELP ==============================="
+      << std::endl
+      << "* General controls: Press V at any time to toggle LookAround mode"
+      << std::endl
+      << "and explore the world freely." << std::endl
+      << "* Lamp controls: Press CTRL + the directional keys to move the lamp."
+      << std::endl
+      << "* Break controls: Place the cue ball using the WASD keys, then press"
+      << std::endl
+      << "SPACE to start your shot." << std::endl
+      << "===================================================================="
+      << std::endl;
+  ;
+}
+
+void Game::TogglePlayer() {
+  if (current_player_ == &player_one_)
+    current_player_ = &player_two_;
+  else
+    current_player_ = &player_one_;
+  std::cout << std::endl
+            << current_player_->name
+            << "'s turn. Press SPACE to start your shot." << std::endl;
+}
+
 #pragma region GAME STAGES
 
 void Game::Break() {
+  std::cout << std::endl
+            << current_player_->name << " is Breaking. Good luck!" << std::endl;
+  std::cout
+      << "Place the cue ball using the WASD keys, then press SPACE to start"
+      << std::endl
+      << "your shot. You can press H at any time to view detailed controls."
+      << std::endl;
+
   prev_stage_ = stage_ = GameStage::Break;
   camera_->TopDown();
 }
@@ -450,12 +511,32 @@ void Game::ViewShot() {
 }
 
 void Game::PlaceCueBall() {
+  if (print_help_[GameStage::PlaceCueBall]) {
+    std::cout << std::endl
+              << "You can place the cue ball anywhere using the WASD keys."
+              << std::endl;
+    print_help_[GameStage::PlaceCueBall] = false;
+  }
+
   prev_stage_ = stage_;
   stage_ = GameStage::PlaceCueBall;
   camera_->TopDown();
 }
 
 void Game::HitCueBall() {
+  if (print_help_[GameStage::HitCueBall]) {
+    std::cout
+        << std::endl
+        << "Press RIGHT_MOUSE_BUTTON and move mouse to position shot"
+        << std::endl
+        << "horizontally.Press LEFT_MOUSE_BUTTON to start moving cue, release"
+        << std::endl
+        << "to hit(the further the cue is from the ball, the stronger the "
+        << std::endl
+        << "shot)." << std::endl;
+    print_help_[GameStage::HitCueBall] = false;
+  }
+
   prev_stage_ = stage_;
   stage_ = GameStage::HitCueBall;
   glm::vec3 default_target = glm::vec3(0);  // look at center of table
@@ -472,6 +553,15 @@ void Game::HitCueBall() {
 }
 
 void Game::LookAround() {
+  if (print_help_[GameStage::LookAround]) {
+    std::cout << std::endl
+              << "Look around using the mouse and the WASDEQ keys" << std::endl
+              << "(first-person view) by pressing RIGHT_MOUSE_BUTTON. Press V "
+              << std::endl
+              << "again to go back to the previous mode." << std::endl;
+    print_help_[GameStage::LookAround] = false;
+  }
+
   if (stage_ != GameStage::LookAround) {
     prev_stage_ = stage_;
     stage_ = GameStage::LookAround;

@@ -15,12 +15,28 @@ typedef struct {
   float kd, ks;
 } MaterialProperties;
 
+typedef struct Player {
+  std::string name;
+  glm::vec3 color;
+  int faults;
+
+  Player() { Player("Player"); }
+
+  Player(std::string name) {
+    color = glm::vec3(1);
+    faults = 0;
+    this->name = name;
+  }
+} Player;
+
 enum class GameStage { Break, PlaceCueBall, HitCueBall, ViewShot, LookAround };
 
 class Game : public SimpleScene {
  public:
   Game();
   ~Game();
+
+  Player GetPlayerName(std::string default);
 
   void Init() override;
 
@@ -44,6 +60,10 @@ class Game : public SimpleScene {
   void OnMouseScroll(int mouse_x, int mouse_y, int offset_x,
                      int offset_y) override;
   void OnWindowResize(int width, int height) override;
+
+  void Help();
+
+  void TogglePlayer();
 
   /*
   Same as PlaceCueBall, but ball can only be placed in the first quarter of the
@@ -108,6 +128,9 @@ class Game : public SimpleScene {
   // Game elements
 
   GameStage stage_, prev_stage_;
+  Player player_one_, player_two_;
+  Player *current_player_;
+  std::unordered_map<GameStage, bool> print_help_;
 };
 }  // namespace pool
 
