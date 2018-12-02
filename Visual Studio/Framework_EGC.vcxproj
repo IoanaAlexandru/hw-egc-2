@@ -62,6 +62,7 @@
     <ClInclude Include="..\Source\pool\game.h" />
     <ClInclude Include="..\Source\pool\objects\ball.h" />
     <ClInclude Include="..\Source\pool\objects\cue.h" />
+    <ClInclude Include="..\Source\pool\player.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Source\pool\shaders\FragmentShader.glsl" />

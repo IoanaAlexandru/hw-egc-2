@@ -5,6 +5,7 @@
 #include <Component/Transform/Transform.h>
 #include <Core/GPU/Mesh.h>
 
+#include "pool/player.h"
 #include "pool/camera.h"
 #include "pool/objects/ball.h"
 #include "pool/objects/cue.h"
@@ -15,21 +16,7 @@ typedef struct {
   float kd, ks;
 } MaterialProperties;
 
-typedef struct Player {
-  std::string name;
-  glm::vec3 color;
-  int faults;
-
-  Player() { Player("Player"); }
-
-  Player(std::string name) {
-    color = glm::vec3(1);
-    faults = 0;
-    this->name = name;
-  }
-} Player;
-
-enum class GameStage { Break, PlaceCueBall, HitCueBall, ViewShot, LookAround };
+enum class GameStage { BREAK, PLACE_CUE_BALL, HIT_CUE_BALL, VIEW_SHOT, LOOK_AROUND };
 
 class Game : public SimpleScene {
  public:
@@ -38,7 +25,11 @@ class Game : public SimpleScene {
 
   Player GetPlayerName(std::string default);
 
+  void EndGame();
+
   void Init() override;
+
+  void StartGame();
 
  private:
   void FrameStart() override;
@@ -99,7 +90,7 @@ class Game : public SimpleScene {
       kPocketRadius, kTableBedBorder;
   // Color constants
   static const glm::vec3 kTableBedColor, kTableColor, kMetalColor, kCueColor,
-      kPlayerOneColor, kPlayerTwoColor;
+      kRed, kYellow;
   // Speed constants
   static const float kMovementSpeed, kSensitivity;
 
@@ -131,6 +122,7 @@ class Game : public SimpleScene {
   Player player_one_, player_two_;
   Player *current_player_;
   std::unordered_map<GameStage, bool> print_help_;
+  bool press_space_to_continue_;
 };
 }  // namespace pool
 

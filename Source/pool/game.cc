@@ -19,8 +19,8 @@ const glm::vec3 Game::kTableBedColor = glm::vec3(0, 0.5, 0.1),
                 Game::kTableColor = glm::vec3(0.3, 0.05, 0.05),
                 Game::kMetalColor = glm::vec3(0.8, 0.8, 0.8),
                 Game::kCueColor = glm::vec3(0.5, 0.15, 0.15),
-                Game::kPlayerOneColor = glm::vec3(0.86, 0.20, 0.21),
-                Game::kPlayerTwoColor = glm::vec3(0.96, 0.76, 0.05);
+                Game::kRed = glm::vec3(0.86, 0.20, 0.21),
+                Game::kYellow = glm::vec3(0.96, 0.76, 0.05);
 const float Game::kMovementSpeed = 2.0f, Game::kSensitivity = 0.001f;
 const float Game::kMaxCueOffset = 2.0f;
 const int Game::kBlackBallIndex = 5, Game::kCueBallIndex = 0;
@@ -77,7 +77,7 @@ void Game::Init() {
     balls_.push_back(new Ball(ball_name, ball_center, kBallRadius, ball_color));
 
     ball_center = glm::vec3(0, kBallRadius, -kTableLength / 5);
-    ball_color = kPlayerOneColor;
+    ball_color = kRed;
     float row_offset = std::sqrt(pow(2 * kBallRadius, 2) - pow(kBallRadius, 2));
     int ball_count = 0;
     for (auto i = 0; i < 5; i++) {
@@ -86,8 +86,7 @@ void Game::Init() {
           ball_color = glm::vec3(0.2, 0.2, 0.2);
           ball_name = "black_ball";
         } else {
-          ball_color =
-              (ball_count + i) % 2 == 0 ? kPlayerOneColor : kPlayerTwoColor;
+          ball_color = (ball_count + i) % 2 == 0 ? kRed : kYellow;
           ball_name = "ball" + std::to_string(ball_count++);
         }
 
@@ -155,29 +154,13 @@ void Game::Init() {
     render_lamp_ = true;
     camera_ = new Camera(window->props.aspectRatio);
 
-    print_help_.emplace(GameStage::HitCueBall, true);
-    print_help_.emplace(GameStage::LookAround, true);
-    print_help_.emplace(GameStage::PlaceCueBall, true);
+    print_help_.emplace(GameStage::HIT_CUE_BALL, true);
+    print_help_.emplace(GameStage::LOOK_AROUND, true);
+    print_help_.emplace(GameStage::PLACE_CUE_BALL, true);
 
-    std::cout << std::endl << "Welcome to 8-ball-pool!" << std::endl;
-    player_one_ = GetPlayerName("Player1");
-    player_two_ = GetPlayerName("Player2");
-
-    current_player_ = &player_one_;
-
+    StartGame();
     Break();
   }
-}
-
-Player Game::GetPlayerName(std::string default) {
-  std::string name;
-  std::cout << "Please enter name for " << default
-            << " (press Enter for default): ";
-  std::getline(std::cin, name);
-  if (name.empty()) {
-    name = default;
-  }
-  return Player(name);
 }
 
 void Game::FrameStart() {
@@ -197,14 +180,15 @@ void Game::Update(float delta_time_seconds) {
     for (auto ball : balls_) {
       if (!ball->IsPotted()) {
         glm::vec3 center = ball->GetCenter();
+        PotStatus pot_status = PotStatus::OK;
 
         // Pockets
         for (auto pocket : pockets_) {
           if (Ball::CheckCollision(ball, pocket, delta_time_seconds)) {
             ball->SetPotted(true);
+            pot_status = current_player_->PotBall(ball->GetColor());
           }
         }
-        if (ball->IsPotted()) continue;
 
         // Rails
         float down = center.z + kBallRadius - kTableLength / 2;
@@ -213,16 +197,51 @@ void Game::Update(float delta_time_seconds) {
         float left = center.x - kBallRadius + kTableWidth / 2;
         bool middle = abs(center.z) + kBallRadius < kPocketRadius;
 
-        if (down > 0)
+        if (down > 0) {
           ball->ReflectZ(down);
-        else if (up < 0)
+        } else if (up < 0) {
           ball->ReflectZ(up);
-        else if (right > 0 && !middle)
+        } else if (right > 0 && !middle) {
           ball->ReflectX(right);
-        else if (left < 0 && !middle)
+        } else if (left < 0 && !middle) {
           ball->ReflectX(left);
-        else if ((right > 0 || left < 0) && middle)
+        } else if ((right > 0 || left < 0) && middle) {
           ball->SetPotted(true);
+          pot_status = current_player_->PotBall(ball->GetColor());
+        }
+
+        if (ball->IsPotted()) {
+          if (player_one_.GetColor() == kRed) player_two_.SetColor(kYellow);
+          if (player_one_.GetColor() == kYellow) player_two_.SetColor(kRed);
+          if (player_two_.GetColor() == kRed) player_one_.SetColor(kYellow);
+          if (player_two_.GetColor() == kYellow) player_one_.SetColor(kRed);
+
+          if (player_one_.GetColor() == ball->GetColor())
+            player_one_.OwnBallPotted();
+          if (player_two_.GetColor() == ball->GetColor())
+            player_two_.OwnBallPotted();
+
+          switch (pot_status) {
+            case PotStatus::FAULT_CUE_BALL:
+              std::cout << "Fault! Potted the cue ball." << std::endl;
+              break;
+            case PotStatus::FAULT_OPPONENT:
+              std::cout << "Fault! Potted opponent ball." << std::endl;
+              break;
+            case PotStatus::LOSS:
+              std::cout << current_player_->GetName()
+                        << " lost by potting the black ball too early."
+                        << std::endl;
+              EndGame();
+              break;
+            case PotStatus::WIN:
+              std::cout << current_player_->GetName() << " won." << std::endl;
+              EndGame();
+              break;
+            default:
+              break;
+          }
+        }
 
         // Balls
         if (ball->IsMoving()) {
@@ -231,6 +250,14 @@ void Game::Update(float delta_time_seconds) {
             if (another_ball == ball || another_ball->IsPotted()) continue;
             if (Ball::CheckCollision(ball, another_ball, delta_time_seconds)) {
               Ball::Bounce(ball, another_ball);
+              if (ball == balls_[kCueBallIndex]) {
+                HitStatus hit_status =
+                    current_player_->HitBall(another_ball->GetColor());
+                if (hit_status == HitStatus::FAULT_OPPONENT ||
+                    hit_status == HitStatus::FAULT_BLACK)
+                  std::cout << "Fault! You have to hit your own ball first."
+                            << std::endl;
+              }
               break;
             }
           }
@@ -238,14 +265,26 @@ void Game::Update(float delta_time_seconds) {
       }
     }
 
-    // Check status of special balls
-
-    if (balls_[kCueBallIndex]->IsPotted() && none_moving) {
-      balls_[kCueBallIndex]->Reset();
-      TogglePlayer();
-      PlaceCueBall();
+    // Check status and toggle player
+    if (!press_space_to_continue_ && stage_ == GameStage::VIEW_SHOT) {
+      if (current_player_->Fault() && none_moving) {
+        TogglePlayer();
+        PlaceCueBall();
+      } else if (current_player_->NonePotted() && none_moving) {
+        TogglePlayer();
+      }
     }
-  }
+
+    if (!current_player_->NonePotted() && none_moving) {
+      press_space_to_continue_ = true;
+      current_player_->Reset();
+    }
+
+    // Bring cue ball back if accidentally potted when placing
+    if ((stage_ == GameStage::PLACE_CUE_BALL || stage_ == GameStage::BREAK) &&
+        balls_[kCueBallIndex]->IsPotted())
+      balls_[kCueBallIndex]->Reset();
+  }  // namespace pool
 
   // Render objects
   {
@@ -266,10 +305,13 @@ void Game::Update(float delta_time_seconds) {
     }
 
     // Cue
-    if (stage_ == GameStage::HitCueBall)
+    glm::vec3 cue_color = current_player_->GetColor() == glm::vec3(1)
+                              ? cue_->GetColor()
+                              : 0.5f * current_player_->GetColor();
+    if (stage_ == GameStage::HIT_CUE_BALL)
       RenderSimpleMesh((Mesh *)cue_, shaders[kPoolShaderName],
                        cue_->GetModelMatrix(), cue_offset_, cue_properties_,
-                       cue_->GetColor());
+                       cue_color);
 
     // Light point
     if (render_lamp_)
@@ -362,13 +404,13 @@ void Game::OnInputUpdate(float delta_time, int mods) {
         lamp_position_ += up * delta_time * kMovementSpeed;
       if (window->KeyHold(GLFW_KEY_Q))
         lamp_position_ -= up * delta_time * kMovementSpeed;
-    } else if (stage_ == GameStage::PlaceCueBall ||
-               stage_ == GameStage::Break) {
+    } else if (stage_ == GameStage::PLACE_CUE_BALL ||
+               stage_ == GameStage::BREAK) {
       // Move cue ball using W, A, S, D
       Ball *cue_ball = balls_[kCueBallIndex];
       glm::vec3 pos = cue_ball->GetCenter();
 
-      float upper_limit = stage_ == GameStage::Break
+      float upper_limit = stage_ == GameStage::BREAK
                               ? kTableLength / 4
                               : -kTableLength / 2 + kBallRadius;
 
@@ -392,7 +434,7 @@ void Game::OnInputUpdate(float delta_time, int mods) {
         }
       }
     }
-  } else if (stage_ == GameStage::LookAround) {
+  } else if (stage_ == GameStage::LOOK_AROUND) {
     // Move camera using W, A, S, D, E, Q
     if (window->KeyHold(GLFW_KEY_W)) camera_->TranslateForward(delta_time);
     if (window->KeyHold(GLFW_KEY_A)) camera_->TranslateRight(-delta_time);
@@ -412,8 +454,8 @@ void Game::OnInputUpdate(float delta_time, int mods) {
 
 void Game::OnKeyPress(int key, int mods) {
   // Press SPACE to start shot if cue ball isn't moving
-  if (key == GLFW_KEY_SPACE && (stage_ != GameStage::HitCueBall) &&
-      !balls_[kCueBallIndex]->IsMoving())
+  if (key == GLFW_KEY_SPACE && (stage_ != GameStage::HIT_CUE_BALL) &&
+      !balls_[kCueBallIndex]->IsMoving() && press_space_to_continue_)
     HitCueBall();
 
   // Press L to hide/unhide lamp
@@ -430,12 +472,12 @@ void Game::OnKeyRelease(int key, int mods) {}
 
 void Game::OnMouseMove(int mouse_x, int mouse_y, int delta_x, int delta_y) {
   if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT)) {
-    if (stage_ == GameStage::HitCueBall) {
+    if (stage_ == GameStage::HIT_CUE_BALL) {
       // Move cue and camera left and right
       camera_->RotateOy((float)-delta_x * kSensitivity);
       cue_->Rotate((float)-delta_x * kSensitivity);
     }
-    if (stage_ == GameStage::LookAround) {
+    if (stage_ == GameStage::LOOK_AROUND) {
       // Move camera left/right/up/down
       camera_->RotateOy((float)-delta_x * kSensitivity);
       camera_->RotateOx((float)-delta_y * kSensitivity);
@@ -447,7 +489,7 @@ void Game::OnMouseBtnPress(int mouse_x, int mouse_y, int button, int mods) {}
 
 void Game::OnMouseBtnRelease(int mouse_x, int mouse_y, int button, int mods) {
   if (button == 1 &&  // GLFW_MOUSE_BUTTON_LEFT not working?
-      cue_offset_ >= 0 && stage_ == GameStage::HitCueBall) {
+      cue_offset_ >= 0 && stage_ == GameStage::HIT_CUE_BALL) {
     // Release LEFT_MOUSE_BUTTON to hit cue ball
     balls_[kCueBallIndex]->CueHit(cue_->GetDirection(), -cue_offset_);
     ViewShot();
@@ -479,52 +521,83 @@ void Game::Help() {
   ;
 }
 
+void Game::StartGame() {
+  std::cout << std::endl << "Welcome to 8-ball-pool!" << std::endl;
+  player_one_ = GetPlayerName("Player1");
+  player_two_ = GetPlayerName("Player2");
+
+  current_player_ = &player_one_;
+  press_space_to_continue_ = true;
+}
+
+Player Game::GetPlayerName(std::string default) {
+  std::string name;
+  std::cout << "Please enter name for " << default
+            << " (press Enter for default): ";
+  std::getline(std::cin, name);
+  if (name.empty()) {
+    name = default;
+  }
+  return Player(name);
+}
+
+void Game::EndGame() {
+  LookAround();
+  player_one_.PrintStats();
+  player_two_.PrintStats();
+}
+
 void Game::TogglePlayer() {
   if (current_player_ == &player_one_)
     current_player_ = &player_two_;
   else
     current_player_ = &player_one_;
   std::cout << std::endl
-            << current_player_->name
+            << current_player_->GetName()
             << "'s turn. Press SPACE to start your shot." << std::endl;
+
+  current_player_->Reset();
+  press_space_to_continue_ = true;
 }
 
 #pragma region GAME STAGES
 
 void Game::Break() {
   std::cout << std::endl
-            << current_player_->name << " is Breaking. Good luck!" << std::endl;
+            << current_player_->GetName() << " is Breaking. Good luck!"
+            << std::endl;
   std::cout
       << "Place the cue ball using the WASD keys, then press SPACE to start"
       << std::endl
       << "your shot. You can press H at any time to view detailed controls."
       << std::endl;
 
-  prev_stage_ = stage_ = GameStage::Break;
+  prev_stage_ = stage_ = GameStage::BREAK;
   camera_->TopDown();
 }
 
 void Game::ViewShot() {
   prev_stage_ = stage_;
-  stage_ = GameStage::ViewShot;
+  stage_ = GameStage::VIEW_SHOT;
   camera_->TopDown();
 }
 
 void Game::PlaceCueBall() {
-  if (print_help_[GameStage::PlaceCueBall]) {
+  if (print_help_[GameStage::PLACE_CUE_BALL]) {
     std::cout << std::endl
               << "You can place the cue ball anywhere using the WASD keys."
               << std::endl;
-    print_help_[GameStage::PlaceCueBall] = false;
+    print_help_[GameStage::PLACE_CUE_BALL] = false;
   }
 
   prev_stage_ = stage_;
-  stage_ = GameStage::PlaceCueBall;
+  stage_ = GameStage::PLACE_CUE_BALL;
+  balls_[kCueBallIndex]->Reset();
   camera_->TopDown();
 }
 
 void Game::HitCueBall() {
-  if (print_help_[GameStage::HitCueBall]) {
+  if (print_help_[GameStage::HIT_CUE_BALL]) {
     std::cout
         << std::endl
         << "Press RIGHT_MOUSE_BUTTON and move mouse to position shot"
@@ -534,11 +607,13 @@ void Game::HitCueBall() {
         << "to hit(the further the cue is from the ball, the stronger the "
         << std::endl
         << "shot)." << std::endl;
-    print_help_[GameStage::HitCueBall] = false;
+    print_help_[GameStage::HIT_CUE_BALL] = false;
   }
 
+  press_space_to_continue_ = false;
+
   prev_stage_ = stage_;
-  stage_ = GameStage::HitCueBall;
+  stage_ = GameStage::HIT_CUE_BALL;
   glm::vec3 default_target = glm::vec3(0);  // look at center of table
   glm::vec3 ball_center = balls_[kCueBallIndex]->GetCenter();
   camera_->ThirdPerson(ball_center, default_target);
@@ -553,31 +628,31 @@ void Game::HitCueBall() {
 }
 
 void Game::LookAround() {
-  if (print_help_[GameStage::LookAround]) {
+  if (print_help_[GameStage::LOOK_AROUND]) {
     std::cout << std::endl
               << "Look around using the mouse and the WASDEQ keys" << std::endl
               << "(first-person view) by pressing RIGHT_MOUSE_BUTTON. Press V "
               << std::endl
               << "again to go back to the previous mode." << std::endl;
-    print_help_[GameStage::LookAround] = false;
+    print_help_[GameStage::LOOK_AROUND] = false;
   }
 
-  if (stage_ != GameStage::LookAround) {
+  if (stage_ != GameStage::LOOK_AROUND) {
     prev_stage_ = stage_;
-    stage_ = GameStage::LookAround;
+    stage_ = GameStage::LOOK_AROUND;
     camera_->FirstPerson();
   } else {
     switch (prev_stage_) {
-      case GameStage::HitCueBall:
+      case GameStage::HIT_CUE_BALL:
         HitCueBall();
         break;
-      case GameStage::ViewShot:
+      case GameStage::VIEW_SHOT:
         ViewShot();
         break;
-      case GameStage::PlaceCueBall:
+      case GameStage::PLACE_CUE_BALL:
         PlaceCueBall();
         break;
-      case GameStage::Break:
+      case GameStage::BREAK:
         Break();
         break;
       default:
