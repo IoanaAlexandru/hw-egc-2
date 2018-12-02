@@ -26,6 +26,7 @@ const float Game::kMaxCueOffset = 2.0f;
 const int Game::kBlackBallIndex = 5, Game::kCueBallIndex = 0;
 const glm::mat4 Game::kTableModelMatrix =
     glm::scale(glm::mat4(1), glm::vec3(2.0f));
+const std::string Game::kPoolShaderName = "PoolShader";
 #pragma endregion
 
 Game::Game() {}
@@ -122,7 +123,7 @@ void Game::Init() {
 
   // Shader
   {
-    Shader *shader = new Shader("PoolShader");
+    Shader *shader = new Shader(kPoolShaderName.c_str());
     shader->AddShader("Source/pool/shaders/VertexShader.glsl",
                       GL_VERTEX_SHADER);
     shader->AddShader("Source/pool/shaders/FragmentShader.glsl",
@@ -225,30 +226,30 @@ void Game::Update(float delta_time_seconds) {
   // Render objects
   {
     // Table
-    RenderSimpleMesh(table_, shaders["PoolShader"], kTableModelMatrix, 0,
+    RenderSimpleMesh(table_, shaders[kPoolShaderName], kTableModelMatrix, 0,
                      table_properties_, kTableColor);
-    RenderSimpleMesh(table_metal_, shaders["PoolShader"], kTableModelMatrix, 0,
-                     metal_properties_, kMetalColor);
-    RenderSimpleMesh(table_bed_, shaders["PoolShader"], kTableModelMatrix, 0,
+    RenderSimpleMesh(table_metal_, shaders[kPoolShaderName], kTableModelMatrix,
+                     0, metal_properties_, kMetalColor);
+    RenderSimpleMesh(table_bed_, shaders[kPoolShaderName], kTableModelMatrix, 0,
                      velvet_properties_, kTableBedColor);
 
     // Balls
     for (auto ball : balls_) {
       ball->Update(delta_time_seconds);
-      RenderSimpleMesh((Mesh *)ball, shaders["PoolShader"],
+      RenderSimpleMesh((Mesh *)ball, shaders[kPoolShaderName],
                        ball->GetModelMatrix(), 0, ball_properties_,
                        ball->GetColor());
     }
 
     // Cue
     if (stage_ == GameStage::HitCueBall)
-      RenderSimpleMesh((Mesh *)cue_, shaders["PoolShader"],
+      RenderSimpleMesh((Mesh *)cue_, shaders[kPoolShaderName],
                        cue_->GetModelMatrix(), cue_offset_, cue_properties_,
                        cue_->GetColor());
 
     // Light point
     if (render_lamp_)
-      RenderSimpleMesh(lamp_, shaders["PoolShader"],
+      RenderSimpleMesh(lamp_, shaders[kPoolShaderName],
                        glm::translate(glm::mat4(1), lamp_position_), 0,
                        metal_properties_, kMetalColor);
   }

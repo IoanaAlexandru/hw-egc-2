@@ -81,6 +81,7 @@ class Game : public SimpleScene {
   static const float kMaxCueOffset;
   static const int kBlackBallIndex, kCueBallIndex;
   static const glm::mat4 kTableModelMatrix;
+  static const std::string kPoolShaderName;
 #pragma endregion
 
   // 3D scene elements
