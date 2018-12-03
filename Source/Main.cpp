@@ -5,7 +5,7 @@ using namespace std;
 
 #include <Core/Engine.h>
 
-#include <pool/game.h>
+#include <pool/game/game.h>
 
 int main(int argc, char **argv) {
   srand((unsigned int)time(NULL));

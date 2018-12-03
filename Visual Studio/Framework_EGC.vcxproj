@@ -35,7 +35,8 @@
     <ClCompile Include="..\Source\include\gl.cpp" />
     <ClCompile Include="..\Source\Main.cpp" />
     <ClCompile Include="..\Source\pool\camera.cc" />
-    <ClCompile Include="..\Source\pool\game.cc" />
+    <ClCompile Include="..\Source\pool\game\game.cc" />
+    <ClCompile Include="..\Source\pool\game\player.cc" />
     <ClCompile Include="..\Source\pool\objects\ball.cc" />
     <ClCompile Include="..\Source\pool\objects\cue.cc" />
   </ItemGroup>
@@ -59,10 +60,10 @@
     <ClInclude Include="..\Source\include\math.h" />
     <ClInclude Include="..\Source\include\utils.h" />
     <ClInclude Include="..\Source\pool\camera.h" />
-    <ClInclude Include="..\Source\pool\game.h" />
+    <ClInclude Include="..\Source\pool\game\game.h" />
+    <ClInclude Include="..\Source\pool\game\player.h" />
     <ClInclude Include="..\Source\pool\objects\ball.h" />
     <ClInclude Include="..\Source\pool\objects\cue.h" />
-    <ClInclude Include="..\Source\pool\player.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Source\pool\shaders\FragmentShader.glsl" />

@@ -28,6 +28,9 @@
     <Filter Include="pool\objects">
       <UniqueIdentifier>{75191311-5834-4676-968a-e26d94866345}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pool\game">
+      <UniqueIdentifier>{04f29b76-be0e-460c-bed4-48a913fb2018}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Core\Engine.cpp">
@@ -76,14 +79,17 @@
     <ClCompile Include="..\Source\pool\objects\ball.cc">
       <Filter>pool\objects</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\pool\game.cc">
-      <Filter>pool</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\pool\objects\cue.cc">
       <Filter>pool\objects</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\pool\camera.cc">
       <Filter>pool</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\pool\game\game.cc">
+      <Filter>pool\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\pool\game\player.cc">
+      <Filter>pool\game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -141,9 +147,6 @@
     <ClInclude Include="..\Source\Component\SceneInput.h">
       <Filter>Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\Source\pool\game.h">
-      <Filter>pool</Filter>
-    </ClInclude>
     <ClInclude Include="..\Source\pool\objects\ball.h">
       <Filter>pool\objects</Filter>
     </ClInclude>
@@ -153,8 +156,11 @@
     <ClInclude Include="..\Source\pool\camera.h">
       <Filter>pool</Filter>
     </ClInclude>
-    <ClInclude Include="..\Source\pool\player.h">
-      <Filter>pool</Filter>
+    <ClInclude Include="..\Source\pool\game\game.h">
+      <Filter>pool\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\pool\game\player.h">
+      <Filter>pool\game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

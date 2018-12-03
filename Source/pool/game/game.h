@@ -5,7 +5,7 @@
 #include <Component/Transform/Transform.h>
 #include <Core/GPU/Mesh.h>
 
-#include "pool/player.h"
+#include "pool/game/player.h"
 #include "pool/camera.h"
 #include "pool/objects/ball.h"
 #include "pool/objects/cue.h"
