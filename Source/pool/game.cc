@@ -261,12 +261,16 @@ void Game::Update(float delta_time_seconds) {
 
         if (down > 0) {
           ball->ReflectZ(down);
+          current_player_->HitRail();
         } else if (up < 0) {
           ball->ReflectZ(up);
+          current_player_->HitRail();
         } else if (right > 0 && !middle) {
           ball->ReflectX(right);
+          current_player_->HitRail();
         } else if (left < 0 && !middle) {
           ball->ReflectX(left);
+          current_player_->HitRail();
         } else if ((right > 0 || left < 0) && middle) {
           ball->SetPotted(true);
           pot_status = current_player_->PotBall(ball->GetColor());

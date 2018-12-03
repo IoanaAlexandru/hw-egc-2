@@ -18,6 +18,7 @@ class Player {
     first_hit_ = glm::vec3(1);
     none_potted_ = true;
     none_hit_ = true;
+    hit_rail_ = false;
     faults_ = 0;
     own_balls_potted_ = 0;
     opponent_balls_potted_ = 0;
@@ -43,6 +44,7 @@ class Player {
     if (combo_ > best_combo_) best_combo_ = combo_;
     combo_ = 0;
     first_hit_ = glm::vec3(1);
+    hit_rail_ = false;
     none_potted_ = true;
     none_hit_ = true;
     fault_ = false;
@@ -50,10 +52,12 @@ class Player {
 
   inline void OwnBallPotted() { own_balls_left_--; }
 
+  inline void HitRail() { hit_rail_ = true; }
+
   inline HitStatus HitBall(glm::vec3 ball_color) {
     none_hit_ = false;
 
-    if (first_hit_ == glm::vec3(1))
+    if (first_hit_ == glm::vec3(1) && !hit_rail_)
       first_hit_ = ball_color;
     else
       return HitStatus::OK;  // not the first ball hit so it doesn't matter
@@ -125,6 +129,7 @@ class Player {
 
   // Status
   glm::vec3 first_hit_;
+  bool hit_rail_;
   bool none_potted_;
   bool none_hit_;
   bool fault_;
