@@ -151,7 +151,7 @@ void Game::Init() {
   }
 
   {
-    render_lamp_ = true;
+    render_lamp_ = false;
     camera_ = new Camera(window->props.aspectRatio);
 
     print_help_.emplace(GameStage::HIT_CUE_BALL, true);
