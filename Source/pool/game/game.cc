@@ -213,11 +213,26 @@ void Game::Help() {
       << "* General controls: Press V at any time to toggle LookAround mode"
       << std::endl
       << "and explore the world freely." << std::endl
+      << "* Look around controls: Look around using the mouse and the WASDEQ"
+      << std::endl
+      << "keys by pressing RIGHT_MOUSE_BUTTON. Press V again to go back to the"
+      << std::endl
+      << "previous mode." << std::endl
       << "* Lamp controls: Press CTRL + the directional keys to move the lamp."
       << std::endl
       << "* Break controls: Place the cue ball using the WASD keys, then press"
       << std::endl
       << "SPACE to start your shot." << std::endl
+      << "* Place cue ball controls: You can place the cue ball anywhere using"
+      << std::endl
+      << "the WASD keys." << std::endl
+      << "* Hit cue ball controls: Press RIGHT_MOUSE_BUTTON and move mouse to"
+      << std::endl
+      << "position shot horizontally.Press LEFT_MOUSE_BUTTON to start moving"
+      << std::endl
+      << "cue, release to hit(the further the cue is from the ball, the"
+      << std::endl
+      << "stronger the shot)." << std::endl
       << "===================================================================="
       << std::endl;
   ;
