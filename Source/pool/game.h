@@ -51,6 +51,8 @@ class Game : public SimpleScene {
   void OnMouseScroll(int mouse_x, int mouse_y, int offset_x,
                      int offset_y) override;
   void OnWindowResize(int width, int height) override;
+  
+  Ball* GetClosestOwnedBall(glm::vec3 point);
 
   /*
   Same as PlaceCueBall, but ball can only be placed in the first quarter of the

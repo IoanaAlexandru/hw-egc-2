@@ -18,9 +18,7 @@ void Camera::FirstPerson() {
   right_ = glm::vec3(1, 0, 0);
 }
 
-void Camera::ThirdPerson(
-    glm::vec3 ball_pos,
-    glm::vec3 target_pos) {
+void Camera::ThirdPerson(glm::vec3 ball_pos, glm::vec3 target_pos) {
   type_ = CameraType::ThirdPerson;
   position_ = GetViewPoint(target_pos, ball_pos);
   position_.y = view_height_;
@@ -80,6 +78,11 @@ void Camera::RotateOz(float angle) {
   }
 }
 
+glm::vec3 Camera::GetViewPoint(glm::vec3 target_pos, glm::vec3 ball_pos) {
+  glm::vec3 v = glm::normalize(target_pos - ball_pos);
+  return ball_pos - distance_to_target_ * v;
+}
+
 glm::mat4 Camera::GetViewMatrix() {
   return glm::lookAt(position_, position_ + forward_, up_);
 }
@@ -95,13 +98,12 @@ void Camera::SetTargetPosition(glm::vec3 target_pos) {
 }
 
 float Camera::GetOxAngle() {
-  glm::vec3 target_pos = GetTargetPosition();
-  glm::vec2 v1 = glm::vec2(target_pos.x, target_pos.z);
-  glm::vec2 v2 = glm::vec2(position_.x, position_.z);
+  glm::vec2 v1 = glm::vec2(0, 1);
+  glm::vec2 v2 = glm::normalize(glm::vec2(forward_.x, forward_.z));
 
-  glm::vec2 vec1 = glm::normalize(glm::vec2(0, 1));
-  glm::vec2 vec2 = glm::normalize(v1 - v2);
-  return acos(glm::dot(vec1, vec2));
+  float angle1 = atan2(v1.y, v1.x);
+  float angle2 = atan2(v2.y, v2.x);
+  return angle2 - angle1;
 }
 
 void Camera::ResetDefaults() {
@@ -160,10 +162,5 @@ void Camera::RotateThirdPersonOz(float angle) {
   TranslateForward(distance_to_target_);
   RotateFirstPersonOz(angle);
   TranslateForward(-distance_to_target_);
-}
-
-glm::vec3 Camera::GetViewPoint(glm::vec3 target_pos, glm::vec3 ball_pos) {
-  glm::vec3 v = glm::normalize(target_pos - ball_pos);
-  return ball_pos - distance_to_target_ * v;
 }
 }  // namespace pool

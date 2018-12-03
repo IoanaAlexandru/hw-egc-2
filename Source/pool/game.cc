@@ -618,6 +618,24 @@ void Game::PlaceCueBall() {
   camera_->TopDown();
 }
 
+Ball *Game::GetClosestOwnedBall(glm::vec3 point) {
+  float smallest_dist = 1000;
+  Ball *closest_ball = NULL;
+  for (auto ball : balls_) {
+    if (ball->IsPotted() || ball == balls_[kCueBallIndex]) continue;
+    if (ball->GetColor() == current_player_->GetColor() ||
+        current_player_->GetColor() == glm::vec3(1)) {
+      float dist = glm::distance(point, ball->GetCenter());
+      if (dist < smallest_dist) {
+        smallest_dist = dist;
+        closest_ball = ball;
+      }
+    }
+  }
+  if (smallest_dist == 1000) return balls_[kBlackBallIndex];
+  return closest_ball;
+}
+
 void Game::HitCueBall() {
   if (print_help_[GameStage::HIT_CUE_BALL]) {
     std::cout
@@ -636,16 +654,16 @@ void Game::HitCueBall() {
 
   prev_stage_ = stage_;
   stage_ = GameStage::HIT_CUE_BALL;
-  glm::vec3 default_target = glm::vec3(0);  // look at center of table
   glm::vec3 ball_center = balls_[kCueBallIndex]->GetCenter();
+  glm::vec3 default_target = GetClosestOwnedBall(ball_center)->GetCenter();
   camera_->ThirdPerson(ball_center, default_target);
 
   // Reposition cue
   cue_->Reposition(ball_center);
-  if (ball_center.x > 0)
+  if (ball_center.x < 0)
     cue_->Rotate((float)(-camera_->GetOxAngle() + M_PI));
   else
-    cue_->Rotate((float)(camera_->GetOxAngle() - M_PI));
+    cue_->Rotate((float)(-camera_->GetOxAngle() + M_PI));
   cue_offset_ = 0;
 }
 

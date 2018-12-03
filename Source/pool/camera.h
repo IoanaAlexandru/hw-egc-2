@@ -3,7 +3,6 @@
 
 #include <include/glm.h>
 #include <include/math.h>
-#include <iostream>
 
 namespace pool {
 enum class CameraType { TopDown, FirstPerson, ThirdPerson };
