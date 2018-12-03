@@ -545,7 +545,9 @@ void Game::OnInputUpdate(float delta_time, int mods) {
   if (window->MouseHold(GLFW_MOUSE_BUTTON_LEFT)) {
     // Move cue closer/further from the ball to choose shot intensity
     cue_offset_ += cue_movement_speed_ * delta_time;
-    if (cue_offset_ >= kMaxCueOffset || cue_offset_ <= 0)
+    if (cue_offset_ > kMaxCueOffset) cue_offset_ = kMaxCueOffset;
+    if (cue_offset_ < 0) cue_offset_ = 0;
+    if (cue_offset_ == kMaxCueOffset || cue_offset_ == 0)
       cue_movement_speed_ *= -1;
   }
 }
