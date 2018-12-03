@@ -51,22 +51,26 @@ void Game::Init() {
     glm::vec3 pure_black = glm::vec3(0, 0, 0);
     glm::vec3 corner = glm::vec3(-kTableWidth / 2 - kPocketRadius, 0, 0);
     pockets_.push_back(
-        new Ball("middle_left", corner, kPocketRadius, pure_black));
-    pockets_.push_back(new Ball(
-        "lower_left", corner + glm::vec3(kPocketRadius, 0, kTableLength / 2),
-        kPocketRadius, pure_black));
-    pockets_.push_back(new Ball(
-        "upper_left", corner + glm::vec3(kPocketRadius, 0, -kTableLength / 2),
-        kPocketRadius, pure_black));
+        new Ball("middle_left_pocket", corner, kPocketRadius, pure_black));
+    pockets_.push_back(
+        new Ball("lower_left_pocket",
+                 corner + glm::vec3(kPocketRadius, 0, kTableLength / 2),
+                 kPocketRadius, pure_black));
+    pockets_.push_back(
+        new Ball("upper_left_pocket",
+                 corner + glm::vec3(kPocketRadius, 0, -kTableLength / 2),
+                 kPocketRadius, pure_black));
     corner = glm::vec3(kTableWidth / 2 + kPocketRadius, 0, 0);
     pockets_.push_back(
-        new Ball("middle_right", corner, kPocketRadius, pure_black));
-    pockets_.push_back(new Ball(
-        "lower_right", corner + glm::vec3(-kPocketRadius, 0, kTableLength / 2),
-        kPocketRadius, pure_black));
-    pockets_.push_back(new Ball(
-        "upper_right", corner + glm::vec3(-kPocketRadius, 0, -kTableLength / 2),
-        kPocketRadius, pure_black));
+        new Ball("middle_right_pocket", corner, kPocketRadius, pure_black));
+    pockets_.push_back(
+        new Ball("lower_right_pocket",
+                 corner + glm::vec3(-kPocketRadius, 0, kTableLength / 2),
+                 kPocketRadius, pure_black));
+    pockets_.push_back(
+        new Ball("upper_right_pocket",
+                 corner + glm::vec3(-kPocketRadius, 0, -kTableLength / 2),
+                 kPocketRadius, pure_black));
   }
 
   // Balls
@@ -112,6 +116,7 @@ void Game::Init() {
   {
     lamp_ = new Mesh("lamp");
     lamp_->LoadMesh(RESOURCE_PATH::MODELS + "Props", "lamp.obj");
+    render_lamp_ = false;
   }
 
   // Shader
@@ -150,13 +155,9 @@ void Game::Init() {
     velvet_properties_.ks = 1.5f;
   }
 
+  // Init game
   {
-    render_lamp_ = false;
     camera_ = new Camera(window->props.aspectRatio);
-
-    print_help_.emplace(GameStage::HIT_CUE_BALL, true);
-    print_help_.emplace(GameStage::LOOK_AROUND, true);
-    print_help_.emplace(GameStage::PLACE_CUE_BALL, true);
 
     StartGame();
     Break();
@@ -166,6 +167,11 @@ void Game::Init() {
 #pragma region GAME CONTROL
 
 void Game::StartGame() {
+  // Only print help once for each stage
+  print_help_.emplace(GameStage::HIT_CUE_BALL, true);
+  print_help_.emplace(GameStage::LOOK_AROUND, true);
+  print_help_.emplace(GameStage::PLACE_CUE_BALL, true);
+
   std::cout << std::endl << "Welcome to 8-ball-pool!" << std::endl;
   player_one_ = GetPlayerName("Player1");
   player_two_ = GetPlayerName("Player2");
@@ -259,7 +265,7 @@ void Game::Update(float delta_time_seconds) {
         glm::vec3 center = ball->GetCenter();
         PotStatus pot_status = PotStatus::OK;
 
-        // Pockets
+        // Pocket collisions
         for (auto pocket : pockets_) {
           if (Ball::CheckCollision(ball, pocket, delta_time_seconds)) {
             ball->SetPotted(true);
@@ -267,7 +273,7 @@ void Game::Update(float delta_time_seconds) {
           }
         }
 
-        // Rails
+        // Rail collisions
         float down = center.z + kBallRadius - kTableLength / 2;
         float up = center.z - kBallRadius + kTableLength / 2;
         float right = center.x + kBallRadius - kTableWidth / 2;
@@ -291,6 +297,7 @@ void Game::Update(float delta_time_seconds) {
           pot_status = current_player_->PotBall(ball->GetColor());
         }
 
+        // Update players and check for potting faults
         if (ball->IsPotted()) {
           if (player_one_.GetColor() == kRed) player_two_.SetColor(kYellow);
           if (player_one_.GetColor() == kYellow) player_two_.SetColor(kRed);
@@ -323,7 +330,7 @@ void Game::Update(float delta_time_seconds) {
           }
         }
 
-        // Balls
+        // Ball collisions
         if (ball->IsMoving()) {
           none_moving = false;
           for (auto another_ball : balls_) {
@@ -361,6 +368,7 @@ void Game::Update(float delta_time_seconds) {
       }
     }
 
+    // Check for endgame
     if (end_ && none_moving) {
       if (balls_[kCueBallIndex]->IsPotted())
         std::cout << current_player_->GetName()
@@ -382,7 +390,7 @@ void Game::Update(float delta_time_seconds) {
     if ((stage_ == GameStage::PLACE_CUE_BALL || stage_ == GameStage::BREAK) &&
         balls_[kCueBallIndex]->IsPotted())
       balls_[kCueBallIndex]->Reset();
-  }  // namespace pool
+  }
 
   // Render objects
   {
@@ -403,6 +411,7 @@ void Game::Update(float delta_time_seconds) {
     }
 
     // Cue
+    // Change cue color to match player if colors were assigned
     glm::vec3 cue_color = current_player_->GetColor() == glm::vec3(1)
                               ? cue_->GetColor()
                               : 0.5f * current_player_->GetColor();
@@ -411,7 +420,7 @@ void Game::Update(float delta_time_seconds) {
                        cue_->GetModelMatrix(), cue_offset_, cue_properties_,
                        cue_color);
 
-    // Light point
+    // Lamp (light source for shader)
     if (render_lamp_)
       RenderSimpleMesh(lamp_, shaders[kPoolShaderName],
                        glm::translate(glm::mat4(1), lamp_position_), 0,
