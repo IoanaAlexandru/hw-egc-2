@@ -26,7 +26,7 @@ void Ball::Update(float delta_time) {
   center_ += movement;
   UpdateModelMatrix();
 
-  movement_vector_ *= 0.995;
+  movement_vector_ *= 0.99;
   if (abs(movement_vector_.x) < 0.1 && abs(movement_vector_.z) < 0.1) {
     movement_vector_ = glm::vec3(0, 0, 0);
   }
@@ -60,7 +60,7 @@ void Ball::MoveLeft(float delta_time) {
 }
 
 void Ball::CueHit(glm::vec3 direction, float distance) {
-  movement_vector_ = direction * distance;
+  movement_vector_ = direction * distance * 2.0f;
 }
 
 void Ball::ReflectX(float offset_x) {
