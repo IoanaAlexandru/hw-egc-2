@@ -429,7 +429,7 @@ void Game::Update(float delta_time_seconds) {
 }
 
 void Game::FrameEnd() {
-  DrawCoordinatSystem(camera_->GetViewMatrix(), camera_->GetProjectionMatrix());
+  //DrawCoordinatSystem(camera_->GetViewMatrix(), camera_->GetProjectionMatrix());
 }
 
 void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
