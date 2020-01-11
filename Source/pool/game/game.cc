@@ -447,7 +447,7 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
 
   GLint shininess_loc =
       glGetUniformLocation(shader->program, "material_shininess");
-  glUniform1ui(shininess_loc, properties.shininess);
+  glUniform1i(shininess_loc, properties.shininess);
 
   GLint eye_position_loc =
       glGetUniformLocation(shader->program, "eye_position");

@@ -14,7 +14,7 @@ uniform vec3 light_position;
 uniform vec3 eye_position;
 uniform float material_kd;
 uniform float material_ks;
-uniform unsigned int material_shininess;
+uniform int material_shininess;
 uniform vec3 object_color;
 uniform float z_offset;
 
