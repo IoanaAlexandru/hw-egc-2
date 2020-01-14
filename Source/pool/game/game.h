@@ -9,6 +9,7 @@
 #include "pool/camera.h"
 #include "pool/objects/ball.h"
 #include "pool/objects/cue.h"
+#include "pool/shadows/ShadowMapFBO.h"
 
 namespace pool {
 typedef struct {
@@ -81,6 +82,8 @@ class Game : public SimpleScene {
   WASDEQ keys (first-person view) by pressing RIGHT_MOUSE_BUTTON.
   */
   void LookAround();
+
+  void setDefaultFrameBuffer();
 
 #pragma region CONSTANTS
   // Object size constants

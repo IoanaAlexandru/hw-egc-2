@@ -31,6 +31,9 @@
     <Filter Include="pool\game">
       <UniqueIdentifier>{04f29b76-be0e-460c-bed4-48a913fb2018}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pool\shadows">
+      <UniqueIdentifier>{ddf6dcdd-aacb-4678-b358-ebf5889bd1a4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Core\Engine.cpp">
@@ -90,6 +93,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\pool\game\player.cc">
       <Filter>pool\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\pool\shadows\ShadowMapFBO.cpp">
+      <Filter>pool\shadows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +167,9 @@
     </ClInclude>
     <ClInclude Include="..\Source\pool\game\player.h">
       <Filter>pool\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\pool\shadows\ShadowMapFBO.h">
+      <Filter>pool\shadows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

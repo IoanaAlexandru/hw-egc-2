@@ -10,6 +10,7 @@
 using namespace std;
 
 namespace pool {
+    ShadowMapFBO shadowMapFBO;
 
 #pragma region CONSTANTS
 const float Game::kTableWidth = 2.16f, Game::kTableLength = 4.26f,
@@ -154,6 +155,11 @@ void Game::Init() {
     velvet_properties_.kd = 1.2f;
     velvet_properties_.ks = 1.5f;
   }
+
+  shadowMapFBO = ShadowMapFBO();
+  shadowMapFBO.Init(window->props.resolution.x, window->props.resolution.y);
+
+  setDefaultFrameBuffer();
 
   // Init game
   {
@@ -729,6 +735,12 @@ void Game::LookAround() {
         break;
     }
   }
+}
+
+void Game::setDefaultFrameBuffer()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, window->props.resolution.x, window->props.resolution.y);
 }
 
 #pragma endregion

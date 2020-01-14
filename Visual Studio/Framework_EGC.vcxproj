@@ -39,6 +39,7 @@
     <ClCompile Include="..\Source\pool\game\player.cc" />
     <ClCompile Include="..\Source\pool\objects\ball.cc" />
     <ClCompile Include="..\Source\pool\objects\cue.cc" />
+    <ClCompile Include="..\Source\pool\shadows\ShadowMapFBO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\Component\CameraInput.h" />
@@ -64,6 +65,7 @@
     <ClInclude Include="..\Source\pool\game\player.h" />
     <ClInclude Include="..\Source\pool\objects\ball.h" />
     <ClInclude Include="..\Source\pool\objects\cue.h" />
+    <ClInclude Include="..\Source\pool\shadows\ShadowMapFBO.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Source\pool\shaders\FragmentShader.glsl" />
@@ -196,6 +198,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalUsingDirectories>%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
