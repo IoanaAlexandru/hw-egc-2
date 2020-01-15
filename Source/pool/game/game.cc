@@ -28,6 +28,7 @@ const int Game::kBlackBallIndex = 5, Game::kCueBallIndex = 0;
 const glm::mat4 Game::kTableModelMatrix =
     glm::scale(glm::mat4(1), glm::vec3(2.0f));
 const std::string Game::kPoolShaderName = "PoolShader";
+const std::string Game::shadowShaderName = "ShadowShader";
 #pragma endregion
 
 Game::Game() {}
@@ -129,6 +130,17 @@ void Game::Init() {
                       GL_FRAGMENT_SHADER);
     shader->CreateAndLink();
     shaders[shader->GetName()] = shader;
+  }
+
+  // Shadows shader
+  {
+      Shader* shader = new Shader(shadowShaderName.c_str());
+      shader->AddShader("Source/pool/shadows/shaders/Shadow_VS.glsl",
+          GL_VERTEX_SHADER);
+      shader->AddShader("Source/pool/shadows/shaders/Shadow_FS.glsl",
+          GL_FRAGMENT_SHADER);
+      shader->CreateAndLink();
+      shaders[shader->GetName()] = shader;
   }
 
   // Light & material properties
@@ -411,7 +423,7 @@ void Game::Update(float delta_time_seconds) {
     // Balls
     for (auto ball : balls_) {
       ball->Update(delta_time_seconds);
-      RenderSimpleMesh((Mesh *)ball, shaders[kPoolShaderName],
+      RenderSimpleMesh((Mesh *)ball, shaders[shadowShaderName],
                        ball->GetModelMatrix(), 0, ball_properties_,
                        ball->GetColor());
     }

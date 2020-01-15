@@ -99,6 +99,7 @@ class Game : public SimpleScene {
   static const int kBlackBallIndex, kCueBallIndex;
   static const glm::mat4 kTableModelMatrix;
   static const std::string kPoolShaderName;
+  static const std::string shadowShaderName;
 #pragma endregion
 
   // 3D scene elements

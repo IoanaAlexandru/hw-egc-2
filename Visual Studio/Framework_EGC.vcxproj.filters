@@ -34,6 +34,9 @@
     <Filter Include="pool\shadows">
       <UniqueIdentifier>{ddf6dcdd-aacb-4678-b358-ebf5889bd1a4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pool\shadows\shaders">
+      <UniqueIdentifier>{c4d66fd5-0521-4823-97a0-1e94ec3707b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Core\Engine.cpp">
@@ -179,6 +182,12 @@
     </None>
     <None Include="..\Source\pool\shaders\VertexShader.glsl">
       <Filter>pool\shaders</Filter>
+    </None>
+    <None Include="..\Source\pool\shadows\shaders\Shadow_FS.glsl">
+      <Filter>pool\shadows\shaders</Filter>
+    </None>
+    <None Include="..\Source\pool\shadows\shaders\Shadow_VS.glsl">
+      <Filter>pool\shadows\shaders</Filter>
     </None>
   </ItemGroup>
 </Project>
