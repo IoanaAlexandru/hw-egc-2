@@ -22,14 +22,19 @@ uniform float z_offset;
 out vec3 frag_position;
 out vec3 frag_color;
 
+// Output values for PBR
+out vec3 world_pos;
+out vec3 N;
+out vec3 V;
+
 void main()
 {
 	// Compute world space vectors
-	vec3 world_pos = (Model * vec4(v_position,1)).xyz;
-	vec3 N = normalize(mat3(Model) * v_normal);
+	world_pos = (Model * vec4(v_position,1)).xyz;
+	N = normalize(mat3(Model) * v_normal);
 
 	vec3 L = normalize(light_position - world_pos);
-	vec3 V = normalize(eye_position - world_pos);
+	V = normalize(eye_position - world_pos);
 	vec3 H = normalize(L + V);
 
 	// Define ambient light component
