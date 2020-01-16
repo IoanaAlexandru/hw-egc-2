@@ -19,6 +19,10 @@
 
 TextRenderer::TextRenderer(GLuint width, GLuint height)
 {
+    // Enable blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     // Load and configure shader
     this->TextShader = new Shader("text");
     this->TextShader->AddShader("Source/pool/text/shaders/text_VS.glsl", GL_VERTEX_SHADER);
