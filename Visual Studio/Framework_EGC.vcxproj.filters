@@ -189,5 +189,11 @@
     <None Include="..\Source\pool\shadows\shaders\Shadow_VS.glsl">
       <Filter>pool\shadows\shaders</Filter>
     </None>
+    <None Include="..\Source\pool\shadows\shaders\Render_to_Texture_FS.glsl">
+      <Filter>pool\shadows\shaders</Filter>
+    </None>
+    <None Include="..\Source\pool\shadows\shaders\Render_to_Texture_VS.glsl">
+      <Filter>pool\shadows\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

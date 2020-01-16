@@ -29,6 +29,7 @@ const glm::mat4 Game::kTableModelMatrix =
     glm::scale(glm::mat4(1), glm::vec3(2.0f));
 const std::string Game::kPoolShaderName = "PoolShader";
 const std::string Game::shadowShaderName = "ShadowShader";
+const std::string Game::renderToTextureShaderName = "RenderToTexture";
 #pragma endregion
 
 Game::Game() {}
@@ -138,6 +139,17 @@ void Game::Init() {
       shader->AddShader("Source/pool/shadows/shaders/Shadow_VS.glsl",
           GL_VERTEX_SHADER);
       shader->AddShader("Source/pool/shadows/shaders/Shadow_FS.glsl",
+          GL_FRAGMENT_SHADER);
+      shader->CreateAndLink();
+      shaders[shader->GetName()] = shader;
+  }
+
+  // Shader for rendering to texture
+  {
+      Shader* shader = new Shader(shadowShaderName.c_str());
+      shader->AddShader("Source/pool/shadows/shaders/Render_to_Texture_VS.glsl",
+          GL_VERTEX_SHADER);
+      shader->AddShader("Source/pool/shadows/shaders/Render_to_Texture_FS.glsl",
           GL_FRAGMENT_SHADER);
       shader->CreateAndLink();
       shaders[shader->GetName()] = shader;
@@ -410,6 +422,11 @@ void Game::Update(float delta_time_seconds) {
       balls_[kCueBallIndex]->Reset();
   }
 
+  glCullFace(GL_BACK);
+  glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+  glClearDepth(1.0f);
+  setDefaultFrameBuffer();
+
   // Render objects
   {
     // Table
@@ -420,12 +437,36 @@ void Game::Update(float delta_time_seconds) {
     RenderSimpleMesh(table_bed_, shaders[kPoolShaderName], kTableModelMatrix, 0,
                      velvet_properties_, kTableBedColor);
 
-    // Balls
+    
+    // Render to texture
+    // Bind shadow buffer for writing
+    shadowMapFBO.BindForWriting();
+    glViewport(0, 0, window->GetResolution().x, window->GetResolution().y);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glCullFace(GL_FRONT);
+    
+    // Render balls to depth
     for (auto ball : balls_) {
-      ball->Update(delta_time_seconds);
-      RenderSimpleMesh((Mesh *)ball, shaders[shadowShaderName],
-                       ball->GetModelMatrix(), 0, ball_properties_,
-                       ball->GetColor());
+        ball->Update(delta_time_seconds);
+        RenderToDepth((Mesh*)ball, shaders[shadowShaderName],
+            ball->GetModelMatrix());
+    }
+    
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glCullFace(GL_BACK);
+
+    // Switch back to the default buffer
+    setDefaultFrameBuffer();
+    // Render pass
+    glClear(GL_DEPTH_BUFFER_BIT);
+    shadowMapFBO.BindForReading(GL_TEXTURE0);
+    
+    for (auto ball : balls_) {
+        ball->Update(delta_time_seconds);
+        RenderToTexture((Mesh*)ball, shaders[kPoolShaderName],
+            ball->GetModelMatrix(), 0, ball_properties_,
+            ball->GetColor());
     }
 
     // Cue
@@ -505,6 +546,109 @@ void Game::RenderSimpleMesh(Mesh *mesh, Shader *shader,
   glBindVertexArray(mesh->GetBuffers()->VAO);
   glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()),
                  GL_UNSIGNED_SHORT, 0);
+}
+
+void Game::RenderToTexture(Mesh* mesh, Shader* shader, 
+                           const glm::mat4& model_matrix, float z_offset, 
+                           MaterialProperties properties, const glm::vec3& color)
+{
+    if (!mesh || !shader || !shader->GetProgramID()) return;
+    // Render an object using the specified shader	
+    glUseProgram(shader->program);
+
+    // Set shader uniforms for light & material properties
+    GLint light_loc = glGetUniformLocation(shader->program, "light_position");
+    glUniform3fv(light_loc, 1, glm::value_ptr(lamp_position_));
+
+    GLint shininess_loc =
+        glGetUniformLocation(shader->program, "material_shininess");
+    glUniform1i(shininess_loc, properties.shininess);
+
+    GLint eye_position_loc =
+        glGetUniformLocation(shader->program, "eye_position");
+    glm::vec3 eye_position = glm::vec3(0, 0, 0);
+    glUniform3fv(eye_position_loc, 1, glm::value_ptr(eye_position));
+
+    GLint kd_loc = glGetUniformLocation(shader->program, "material_kd");
+    glUniform1f(kd_loc, properties.kd);
+
+    GLint ks_loc = glGetUniformLocation(shader->program, "material_ks");
+    glUniform1f(ks_loc, properties.ks);
+
+    GLint color_loc = glGetUniformLocation(shader->program, "object_color");
+    glUniform3fv(color_loc, 1, glm::value_ptr(color));
+
+    GLint z_offset_loc = glGetUniformLocation(shader->program, "z_offset");
+    glUniform1f(z_offset_loc, z_offset);
+
+    // Bind model matrix
+    GLint model_matrix_loc = glGetUniformLocation(shader->program, "Model");
+    glUniformMatrix4fv(model_matrix_loc, 1, GL_FALSE,
+        glm::value_ptr(model_matrix));
+    // Bind view matrix
+    glm::mat4 view_matrix = camera_->GetViewMatrix();
+    int view_matrix_loc = glGetUniformLocation(shader->program, "View");
+    glUniformMatrix4fv(view_matrix_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
+    // Bind projection matrix
+    glm::mat4 projection_matrix = camera_->GetProjectionMatrix();
+    int loc_projection_matrix =
+        glGetUniformLocation(shader->program, "Projection");
+    glUniformMatrix4fv(loc_projection_matrix, 1, GL_FALSE,
+        glm::value_ptr(projection_matrix));
+    // Bind light view matrix	
+    glm::mat4 light_view_matrix = computeLightViewMatrix();
+    int light_view_matrix_loc = glGetUniformLocation(shader->program, "LightView");
+    glUniformMatrix4fv(light_view_matrix_loc, 1, GL_FALSE, glm::value_ptr(light_view_matrix));
+    // Bind light projection matrix
+    glm::mat4 light_projection_matrix = glm::ortho(-80.0f, 80.0f, -50.0f, 50.0f, 0.01f, 500.0f);
+    int loc_light_projection_matrix =
+        glGetUniformLocation(shader->program, "LightProjection");
+    glUniformMatrix4fv(loc_light_projection_matrix, 1, GL_FALSE,
+        glm::value_ptr(light_projection_matrix));
+    
+    // Send uniform texture to shader
+    //glUniform1i(GL_TEXTURE1, 1);
+    // Draw the object	
+    glBindVertexArray(mesh->GetBuffers()->VAO);
+    glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()),
+        GL_UNSIGNED_SHORT, 0);
+}
+
+void Game::RenderToDepth(Mesh* mesh, Shader* shader, const glm::mat4& model_matrix)
+{
+    if (!mesh || !shader || !shader->GetProgramID()) return;
+    // Render an object using the specified shader	
+    glUseProgram(shader->program);
+    // Send uniform texture to shader
+
+    // Use light perspective	
+    // Bind model matrix	
+    GLint model_matrix_loc = glGetUniformLocation(shader->program, "Model");
+    glUniformMatrix4fv(model_matrix_loc, 1, GL_FALSE,
+        glm::value_ptr(model_matrix));
+    // Bind view matrix	
+    glm::mat4 view_matrix = computeLightViewMatrix();
+    int view_matrix_loc = glGetUniformLocation(shader->program, "View");
+    glUniformMatrix4fv(view_matrix_loc, 1, GL_FALSE, glm::value_ptr(view_matrix));
+    // Bind projection matrix
+    glm::mat4 light_projection_matrix = glm::ortho(-80.0f, 80.0f, -50.0f, 50.0f, 0.01f, 500.0f);
+    int loc_projection_matrix =
+        glGetUniformLocation(shader->program, "Projection");
+    glUniformMatrix4fv(loc_projection_matrix, 1, GL_FALSE,
+        glm::value_ptr(light_projection_matrix));
+    // Draw the object	
+    glBindVertexArray(mesh->GetBuffers()->VAO);
+    glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()),
+        GL_UNSIGNED_SHORT, 0);
+}
+
+glm::mat4 Game::computeLightViewMatrix()
+{
+    glm::mat4 lightView;
+    glm::vec3 center = glm::vec3(0.0);
+    glm::vec3 up = glm::vec3(0.0, 1.0, 0.0);
+    lightView = glm::lookAt(lamp_position_, center, up);
+    return lightView;
 }
 
 #pragma region INPUT UPDATE

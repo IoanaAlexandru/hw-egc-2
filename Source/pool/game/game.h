@@ -41,6 +41,11 @@ class Game : public SimpleScene {
                         const glm::mat4 &model_matrix, float z_offset,
                         MaterialProperties properties,
                         const glm::vec3 &color = glm::vec3(1));
+  void RenderToDepth(Mesh* mesh, Shader* shader, const glm::mat4& model_matrix);
+  void RenderToTexture(Mesh* mesh, Shader* shader,
+                       const glm::mat4& model_matrix, float z_offset,
+                       MaterialProperties properties,
+                       const glm::vec3& color = glm::vec3(1));
 
   void OnInputUpdate(float delta_time, int mods) override;
   void OnKeyPress(int key, int mods) override;
@@ -82,8 +87,11 @@ class Game : public SimpleScene {
   WASDEQ keys (first-person view) by pressing RIGHT_MOUSE_BUTTON.
   */
   void LookAround();
-
   void setDefaultFrameBuffer();
+  /*
+  Computes the View Matrix of the light.
+  */
+  glm::mat4 computeLightViewMatrix();
 
 #pragma region CONSTANTS
   // Object size constants
@@ -100,6 +108,7 @@ class Game : public SimpleScene {
   static const glm::mat4 kTableModelMatrix;
   static const std::string kPoolShaderName;
   static const std::string shadowShaderName;
+  static const std::string renderToTextureShaderName;
 #pragma endregion
 
   // 3D scene elements
