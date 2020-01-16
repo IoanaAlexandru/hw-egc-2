@@ -40,6 +40,7 @@
     <ClCompile Include="..\Source\pool\objects\ball.cc" />
     <ClCompile Include="..\Source\pool\objects\cue.cc" />
     <ClCompile Include="..\Source\pool\shadows\ShadowMapFBO.cpp" />
+    <ClCompile Include="..\Source\pool\text\textrenderer.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\Component\CameraInput.h" />
@@ -66,6 +67,7 @@
     <ClInclude Include="..\Source\pool\objects\ball.h" />
     <ClInclude Include="..\Source\pool\objects\cue.h" />
     <ClInclude Include="..\Source\pool\shadows\ShadowMapFBO.h" />
+    <ClInclude Include="..\Source\pool\text\textrenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Source\pool\shaders\FragmentShader.glsl" />
@@ -74,6 +76,8 @@
     <None Include="..\Source\pool\shadows\shaders\Render_to_Texture_VS.glsl" />
     <None Include="..\Source\pool\shadows\shaders\Shadow_FS.glsl" />
     <None Include="..\Source\pool\shadows\shaders\Shadow_VS.glsl" />
+    <None Include="..\Source\pool\text\shaders\text_FS.glsl" />
+    <None Include="..\Source\pool\text\shaders\text_VS.glsl" />
     <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

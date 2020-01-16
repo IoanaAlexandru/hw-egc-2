@@ -10,6 +10,7 @@
 #include "pool/objects/ball.h"
 #include "pool/objects/cue.h"
 #include "pool/shadows/ShadowMapFBO.h"
+#include "pool/text/textrenderer.h"
 
 namespace pool {
 typedef struct {
@@ -134,6 +135,9 @@ class Game : public SimpleScene {
   Player *current_player_;
   std::unordered_map<GameStage, bool> print_help_;
   bool press_space_to_continue_, end_;
+
+  // Text
+  TextRenderer* text_renderer_;
 };
 }  // namespace pool
 

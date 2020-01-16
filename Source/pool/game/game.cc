@@ -183,6 +183,12 @@ void Game::Init() {
   shadowMapFBO = ShadowMapFBO();
   shadowMapFBO.Init(window->props.resolution.x, window->props.resolution.y);
 
+  // Text
+  {
+      text_renderer_ = new TextRenderer(window->props.resolution.x, window->props.resolution.y);
+      text_renderer_->Load(RESOURCE_PATH::ROOT + "Fonts/" + "OCRAEXT.TTF", 24);
+  }
+
   setDefaultFrameBuffer();
 
   // Init game
@@ -426,6 +432,9 @@ void Game::Update(float delta_time_seconds) {
   glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
   glClearDepth(1.0f);
   setDefaultFrameBuffer();
+
+  // Text test
+  text_renderer_->RenderText("Welcome to 8-ball pool!", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 
   // Render objects
   {
