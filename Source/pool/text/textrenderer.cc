@@ -22,15 +22,15 @@ TextRenderer::TextRenderer(GLuint width, GLuint height)
     // Load and configure shader
     this->TextShader = new Shader("text");
     this->TextShader->AddShader("Source/pool/text/shaders/text_VS.glsl", GL_VERTEX_SHADER);
-    this->TextShader->AddShader("Source/pool/text/shaders/text_fS.glsl", GL_FRAGMENT_SHADER);
+    this->TextShader->AddShader("Source/pool/text/shaders/text_FS.glsl", GL_FRAGMENT_SHADER);
     this->TextShader->CreateAndLink();
 
-    glUseProgram(this->TextShader->program);
+    this->TextShader->Use();
 
-    GLint projection_loc = glGetUniformLocation(this->TextShader->program, "projection");
+    GLint projection_loc = this->TextShader->GetUniformLocation("projection");
     glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(glm::ortho(0.0f, static_cast<GLfloat>(width), static_cast<GLfloat>(height), 0.0f)));
 
-    GLint text_loc = glGetUniformLocation(this->TextShader->program, "text");
+    GLint text_loc = this->TextShader->GetUniformLocation("text");
     glUniform1i(text_loc, 0);
 
     // Configure VAO/VBO for texture quads
@@ -109,9 +109,9 @@ void TextRenderer::Load(std::string font, GLuint fontSize)
 void TextRenderer::RenderText(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color)
 {
     // Activate corresponding render state	
-    glUseProgram(this->TextShader->program);
+    this->TextShader->Use();
 
-    GLint color_loc = glGetUniformLocation(this->TextShader->program, "textColor");
+    GLint color_loc = this->TextShader->GetUniformLocation("textColor");
     glUniform3f(color_loc, color.x, color.y, color.z);
 
     glActiveTexture(GL_TEXTURE0);
